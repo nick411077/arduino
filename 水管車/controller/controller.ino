@@ -12,7 +12,6 @@ byte type = 0;
 void setup()
 {
     Serial.begin(115200); // initialize serial at baudrate 9600:
-    Serial1.begin(115200);
     Serial2.begin(115200);
     delay(500);
     error = ps2x.config_gamepad(27, 25, 26, 33, false, false); //setup pins and settings:  GamePad(clock, command, attention, data, Pressures?, Rumble?) check for error
@@ -63,7 +62,7 @@ void loop()
     if (lxReading < 50 ){num=num+4;}
     if (lyReading > 200){num=num+8;}
     digitalWrite(DRE, HIGH);
-    Serial1.println(num);
+    Serial2.println(num);
     delay(50);
     digitalWrite(DRE, LOW);
     while (Serial2.available() >0)
