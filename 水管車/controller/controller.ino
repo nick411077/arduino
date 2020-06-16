@@ -1,94 +1,76 @@
 #include <PS2X_lib.h>
 
-int DE = 25;
-int RE = 26;
-int num;
+int DRE = 14;
+int num = 0;
 long int GG;
 PS2X ps2x;
-int error;
+int error = 0; 
+byte type = 0;
 
-// parameters for reading the joystick:
-int range = 12;               // output range of X or Y movement
-int responseDelay = 5;        // response delay of the mouse, in ms
-int threshold = range/4;      // resting threshold
-int center = range/2;         // resting position value
 
 
 void setup()
 {
     Serial.begin(115200); // initialize serial at baudrate 9600:
+    Serial1.begin(115200);
     Serial2.begin(115200);
-    do
+    delay(500);
+    error = ps2x.config_gamepad(27, 25, 26, 33, false, false); //setup pins and settings:  GamePad(clock, command, attention, data, Pressures?, Rumble?) check for error
+
+    if (error == 0)
     {
-        //GamePad(clock, command, attention, data, Pressures?, Rumble?)
-        error = ps2x.config_gamepad(13, 11, 10, 12, true, true); //這行要和接線對應正確
-        if (error == 0)
-        {
-            Serial.print("Gamepad found!");
-            break;
-        }
-        else
-        {
-            delay(100);
-        }
-    } while (1);
-    pinMode(DE, OUTPUT);
-    pinMode(RE, OUTPUT);
+        Serial.println("Found Controller, configured successful");
+    }
+
+    else if (error == 1)
+        Serial.println("No controller found, check wiring, see readme.txt to enable debug. visit www.billporter.info for troubleshooting tips");
+
+    else if (error == 2)
+        Serial.println("Controller found but not accepting commands. see readme.txt to enable debug. Visit www.billporter.info for troubleshooting tips");
+
+    else if (error == 3)
+        Serial.println("Controller refusing to enter Pressures mode, may not support it. ");
+
+    type = ps2x.readType();
+    switch (type)
+    {
+    case 0:
+        Serial.println("Unknown Controller type");
+        break;
+    case 1:
+        Serial.println("DualShock Controller Found");
+        break;
+    case 2:
+        Serial.println("GuitarHero Controller Found");
+        break;
+    }
+    pinMode(DRE, OUTPUT);
     delay(10);
-    digitalWrite(DE, LOW);
-    digitalWrite(RE, LOW); //  (always high as Master Writes data to Slave)
-    int vrx = analogRead(14);
-    int vry = analogRead(27);
+    digitalWrite(DRE, LOW); //  (always high as Master Writes data to Slave)
 }
 void loop()
 {
-    if (Serial.available() == 2)
-    {
-        num = Serial.read(); //Serial Write POTval to RS-485 Bus
-        digitalWrite(DE, HIGH);
-        Serial2.write(num);
-        Serial.read() > 0;
-        delay(50);
-        Serial2.read() > 0;
-        digitalWrite(DE, LOW);
-    }
-    else
-    {
-        digitalWrite(DE, LOW);
-        while (Serial2.available() >= 3)
-        {
-            GG = Serial2.read();
-            Serial.println(GG);
-        }
-    }
-}
-void PS2()
-{
+    num = 0;
+    if (error == 1) //skip loop if no controller found
+        return;
     ps2x.read_gamepad(false, 0);
-    int lxReading = readAxis(PSS_LX);
-    int lyReading = readAxis(PSS_LY);
-    int rxReading = readAxis(PSS_RX);
-    int ryReading = readAxis(PSS_RY);
-    int l1Reading = readAxis(PSB_L1);
-    int r1Reading = readAxis(PSB_R1);
-}
-int readAxis(int thisAxis)
-{
-    // read the analog input:
-    int reading = ps2x.Analog(thisAxis);
-
-    // map the reading from the analog input range to the output range:
-    reading = map(reading, 0, 255, 0, range);
-
-    // if the output reading is outside from the
-    // rest position threshold,  use it:
-    int distance = reading - center;
-
-    if (abs(distance) < threshold)
+    int lxReading = ps2x.Analog(PSS_LX);
+    int lyReading = ps2x.Analog(PSS_LY);
+    int rxReading = ps2x.Analog(PSS_RX);
+    int ryReading = ps2x.Analog(PSS_RY);
+    if (lyReading < 50 ){num=num+1;}
+    if (lxReading > 200){num=num+2;}
+    if (lxReading < 50 ){num=num+4;}
+    if (lyReading > 200){num=num+8;}
+    digitalWrite(DRE, HIGH);
+    Serial1.println(num);
+    delay(50);
+    digitalWrite(DRE, LOW);
+    while (Serial2.available() >0)
     {
-        distance = 0;
+        digitalWrite(DRE, LOW);
+        GG = Serial2.read();
+        Serial.write(GG);
     }
-
-    // return the distance for this axis:
-    return distance;
+    delay(50);
 }
