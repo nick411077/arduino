@@ -1,11 +1,10 @@
 #include <PS2X_lib.h>
 
-int on = 0;
 int DRE = 6;
 int RE = 7;
 int num = 0;
 int pwm = 0;
-long int GG;
+byte GG;
 PS2X ps2x;
 int error = 0; 
 byte type = 0;
@@ -59,39 +58,27 @@ void loop()
     if (error == 1) //skip loop if no controller found
         return;
     ps2x.read_gamepad(false, 0);
-    byte lxReading = ps2x.Analog(PSS_LX);
-    byte lyReading = ps2x.Analog(PSS_LY);
     byte rxReading = ps2x.Analog(PSS_RX);
     byte ryReading = ps2x.Analog(PSS_RY);
-    if (lyReading < 50 ){num=num+1;}
-    if (lxReading > 200){num=num+2;}
-    if (lxReading < 50 ){num=num+4;}
-    if (lyReading > 200){num=num+8;}
-    if (ryReading < 50 ){pwm=15;}
-    if (rxReading > 200){pwm=30;}
-    if (rxReading < 50 ){pwm=45;}
-    if (ryReading > 200){pwm=60;}
-    if (ps2x.Button(PSB_L1)){pwm=75;}
-    if (ps2x.Button(PSB_R1)){pwm=90;}
+    if (ryReading < 100  &&ryReading != 0  ){num=num+1;}
+    if (rxReading > 150 &&rxReading != 255){num=num+2;}
+    if (rxReading < 100  &&rxReading != 0  ){num=num+4;}
+    if (ryReading > 150 &&ryReading != 255){num=num+8;}
+    if (ps2x.Button(PSB_PAD_UP)){pwm=15;}
+    if (ps2x.Button(PSB_PAD_DOWN)){pwm=30;}
+    if (ps2x.Button(PSB_PAD_RIGHT)){pwm=45;}
+    if (ps2x.Button(PSB_PAD_LEFT)){pwm=60;}
+    if (ps2x.Button(PSB_R1)){pwm=75;}
+    if (ps2x.Button(PSB_L1)){pwm=90;}
+    delay(10);
     digitalWrite(DRE, HIGH);
     Serial2.println(num+pwm);
+    Serial.println(num+pwm);
     digitalWrite(DRE, LOW);
-    if (num != 0|| pwm != 0)
+    while (Serial2.available() > 0)
     {
-        on = 1;
+        GG = Serial2.read();
+        Serial.write(GG);
+        Serial.flush();
     }
-    if (on == 1)
-    {
-        while (Serial2.read() > 0){}
-    }
-    if (num == 0|| pwm == 0)
-    {
-        on = 0;
-        while (Serial2.available() >0)
-        {
-            GG = Serial2.read();
-            Serial.write(GG);
-        }
-    }
-    while (Serial2.read() > 0){}
 }

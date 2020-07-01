@@ -1,7 +1,14 @@
 #include <DHT.h>
+#include <Wire.h>
+#include <Adafruit_PWMServoDriver.h>
 
 #define DHTPIN A4     //類比腳位
-#define DHTTYPE DHT21 //DHT類型
+#define DHTTYPE DHT11 //DHT類型
+
+#define MIN_PULSE_WIDTH       500
+#define MAX_PULSE_WIDTH       2500
+#define FREQUENCY             50
+
 
 long int Lcounter = 0; //定義 counter 為 int 類型變數，且初始值為0
 long int LaState;      //定義 aState 為 int 類型變數
@@ -9,9 +16,14 @@ long int LaLastState;  //定義 aLastState 為 int 類型變數
 long int Rcounter = 0; //定義 counter 為 int 類型變數，且初始值為0
 long int RaState;      //定義 aState 為 int 類型變數
 long int RaLastState;  //定義 aLastState 為 int 類型變數
+byte moto0 =179;
+byte moto1 =90;
+byte moto2 =170;
 int RE = 12;
-int DE = 10;
+int DE = 12;
+int numder = 0;
 int num = 0;
+int moto = 0;
 
 void DigitalWrite(int pinNumber, boolean status)
 {
@@ -28,14 +40,24 @@ int Position(uint8_t pinNumber)
     pinMode(pinNumber, INPUT);
     digitalRead(pinNumber);
 }
+int pulseWidth(int angle)
+{
+  int pulse_wide, analog_value;
+  pulse_wide   = map(angle, 0, 180, MIN_PULSE_WIDTH, MAX_PULSE_WIDTH);
+  analog_value = int(float(pulse_wide) / 1000000 * FREQUENCY * 4096);
+  return analog_value;
+}
 
 DHT dht(DHTPIN, DHTTYPE);
+Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
 void setup()
 {
     Serial.begin(115200);
     Serial2.begin(115200);
     dht.begin();
+    pwm.begin();
+    pwm.setPWMFreq(FREQUENCY);  //模擬伺服在50赫茲更新下執行
     LaLastState = Position(2);
     RaLastState = Position(3);
     pinMode(RE, OUTPUT);
@@ -45,11 +67,16 @@ void setup()
     digitalWrite(DE, LOW);
     attachInterrupt(0, Ldata, CHANGE);
     attachInterrupt(1, Rdata, CHANGE);
+    pwm.setPWM(0, 0, pulseWidth(moto0));
+    pwm.setPWM(1, 0, pulseWidth(moto1));
+    pwm.setPWM(2, 0, pulseWidth(moto2));
 }
 
 void loop()
 {
     num = 0;
+    moto = 0;
+    numder = 0;
     float h = dht.readHumidity();
     float t = dht.readTemperature();
     int x = analogRead(A7); //read from xpin
@@ -57,7 +84,17 @@ void loop()
     int z = analogRead(A5); //read from zpin
     if (Serial2.available() > 0)
     {
-        num = Serial2.parseInt();
+        numder = Serial2.parseInt();
+        while (Serial2.read() >= 0){}
+        Serial.println(numder);
+        Serial.println(Serial2.available());
+        if (numder < 14){num = numder;}
+        if (numder < 29 && numder > 14){num = numder - 15;moto = 15;}
+        if (numder < 44 && numder > 29){num = numder - 30;moto = 30;}
+        if (numder < 59 && numder > 44){num = numder - 45;moto = 45;}
+        if (numder < 74 && numder > 59){num = numder - 60;moto = 60;}
+        if (numder < 89 && numder > 74){num = numder - 75;moto = 75;}
+        if (numder > 89){num = numder - 90;moto = 90;}
         switch (num)
         {
         case 1:
@@ -142,29 +179,65 @@ void loop()
             AnalogWrite(A2, 255);
             break;
         }
+        switch (moto)
+        {
+        case 15:
+            Serial.println("15");
+            if (moto0<=180)
+            {
+                Serial.println("done");
+                moto0+=5;
+                pwm.setPWM(0, 0, pulseWidth(moto0));
+            }
+            break;
+        case 30:
+            Serial.println("30");
+            if (moto0>=0)
+            {
+                moto0-=5;
+                pwm.setPWM(0, 0, pulseWidth(moto0));
+            }
+            break;
+        case 45:
+            Serial.println("45");
+            if (moto1<=180)
+            {
+                moto1+=5;
+                pwm.setPWM(1, 0, pulseWidth(moto1));
+            }
+            break;
+        case 60:
+            Serial.println("60");
+            if (moto1>=0)
+            {
+                moto1-=5;
+                pwm.setPWM(1, 0, pulseWidth(moto1));
+            }
+            break;
+        case 75:
+            Serial.println("75");
+            if (moto2<=180)
+            {
+                moto2+=5;
+                pwm.setPWM(2, 0, pulseWidth(moto2));
+            }
+            break;
+        case 90:
+            Serial.println("90");
+            if (moto2>=0)
+            {
+                moto2-=5;
+                pwm.setPWM(2, 0, pulseWidth(moto2));
+            }
+            break;
+        }
+
     }
     digitalWrite(DE, HIGH);
+    String alldata = "{\"L\":\""+String(Lcounter)+"\",\"R\":\""+Rcounter+"\",\"X\":\""+x+"\",\"Y\":\""+y+"\",\"Z\":\""+z+"\",\"H\":\""+h+"\",\"T\":\""+t+"\"}";
     Serial2.println();
-    Serial2.print("L:");
-    Serial2.println(Lcounter);
-    Serial2.print("R:");
-    Serial2.println(Rcounter);
-    Serial2.print("X:");
-    Serial2.print(x);
-    Serial2.print("Y:");
-    Serial2.print(y);
-    Serial2.print(" Z:");
-    Serial2.print(z);
-    Serial2.println();
-    Serial2.print("H:");
-    Serial2.print(h);
-    Serial2.println();
-    Serial2.print("T:");
-    Serial2.print(t);
-    Serial2.println("*C");
-    delay(50);
+    Serial2.print(alldata);
     digitalWrite(DE, LOW);
-    while (Serial2.read() > 0){}
 }
 void Ldata()
 {
