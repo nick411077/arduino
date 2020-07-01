@@ -70,7 +70,7 @@ void loop()
     if (ps2x.Button(PSB_PAD_LEFT)){pwm=60;}
     if (ps2x.Button(PSB_R1)){pwm=75;}
     if (ps2x.Button(PSB_L1)){pwm=90;}
-    delay(10);
+    delay(5); //目前問題加上了delay會有掉資料的問題
     digitalWrite(DRE, HIGH);
     Serial2.println(num+pwm);
     Serial.println(num+pwm);
