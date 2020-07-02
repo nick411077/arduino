@@ -1,5 +1,4 @@
 # 水管車
-
 # Controller<h2>是搖桿控制端
 ### Controller程式分類
 搖桿判別
@@ -17,7 +16,7 @@
 ```
 進行接收資料
 ```C
-    delay(5);  //目前問題加上了delay會有掉資料的問題
+    delay(10);  //解決delay會有掉資料的問題
     digitalWrite(DRE, HIGH);
     Serial2.println(num+pwm);
     Serial.println(num+pwm);
@@ -30,11 +29,28 @@
     }
 ```
 
-### Controller已知問題
-增加delay會有掉接收資料問題<br>
-如果沒有增加delay會有搖桿反應不佳<br>
-delay5微秒大概是比較穩定的方法可以順利的讀取搖桿得值<br>
-也可以比較減少掉資料問題(多少還是會掉資料)
+### Controller debug
+會出現掉資料的問題是緩存區滿了導致資料不全<br>
+所以要進行擴充緩存區大小<br>
+如果不用delay的話arduino可以很快的把資料取走就不會有滿出來的情況<br>
+但是我們必須使用delay所以要增加緩存區大小好讓在滿出來前取走<br>
+更改還存區大小要從 HardwareSerial.h 46跟53行更改
+```C
+#if !defined(SERIAL_TX_BUFFER_SIZE)
+#if ((RAMEND - RAMSTART) < 1023) //如果arduino記憶體可用空間小於1KB 只能有16Byte可以使用
+#define SERIAL_TX_BUFFER_SIZE 16
+#else
+#define SERIAL_TX_BUFFER_SIZE 64 //更改為128
+#endif
+#endif
+#if !defined(SERIAL_RX_BUFFER_SIZE)
+#if ((RAMEND - RAMSTART) < 1023) //如果arduino記憶體可用空間小於1KB 只能有16Byte可以使用
+#define SERIAL_RX_BUFFER_SIZE 16
+#else
+#define SERIAL_RX_BUFFER_SIZE 64 //更改為128
+#endif
+#endif
+```
 
 
 # Receiver<h2>是遠端車子端
