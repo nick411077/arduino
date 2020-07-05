@@ -16,10 +16,10 @@ long int LaLastState;  //定義 aLastState 為 int 類型變數
 long int Rcounter = 0; //定義 counter 為 int 類型變數，且初始值為0
 long int RaState;      //定義 aState 為 int 類型變數
 long int RaLastState;  //定義 aLastState 為 int 類型變數
-byte moto0 =179;
-byte moto1 =90;
+byte moto0 =180;
+byte moto1 =100;
 byte moto2 =170;
-int RE = 12;
+int RE = 13;
 int DE = 12;
 int numder = 0;
 int num = 0;
@@ -77,11 +77,12 @@ void loop()
     num = 0;
     moto = 0;
     numder = 0;
-    float h = dht.readHumidity();
-    float t = dht.readTemperature();
     int x = analogRead(A7); //read from xpin
     int y = analogRead(A6); //read from ypin
     int z = analogRead(A5); //read from zpin
+    float h = dht.readHumidity();
+    float t = dht.readTemperature();
+    Serial.println(t);
     if (Serial2.available() > 0)
     {
         numder = Serial2.parseInt();
@@ -231,13 +232,14 @@ void loop()
             }
             break;
         }
-
     }
     digitalWrite(DE, HIGH);
     String alldata = "{\"L\":\""+String(Lcounter)+"\",\"R\":\""+Rcounter+"\",\"X\":\""+x+"\",\"Y\":\""+y+"\",\"Z\":\""+z+"\",\"H\":\""+h+"\",\"T\":\""+t+"\"}";
-    Serial2.println();
-    Serial2.print(alldata);
+    Serial2.println(alldata);
+    Serial2.flush();
     digitalWrite(DE, LOW);
+    while (Serial2.read() > 0){}
+    delay(5);
 }
 void Ldata()
 {

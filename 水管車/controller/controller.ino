@@ -1,6 +1,6 @@
 #include <PS2X_lib.h>
 
-int DRE = 6;
+int DE = 6;
 int RE = 7;
 int num = 0;
 int pwm = 0;
@@ -46,9 +46,10 @@ void setup()
         Serial.println("GuitarHero Controller Found");
         break;
     }
-    pinMode(DRE, OUTPUT);
+    pinMode(DE, OUTPUT);
+    pinMode(RE, OUTPUT);
     delay(10);
-    digitalWrite(DRE, LOW); //  (always high as Master Writes data to Slave)
+    digitalWrite(DE, LOW); //  (always high as Master Writes data to Slave)
     digitalWrite(RE, LOW);
 }
 void loop()
@@ -71,14 +72,25 @@ void loop()
     if (ps2x.Button(PSB_R1)){pwm=75;}
     if (ps2x.Button(PSB_L1)){pwm=90;}
     delay(10); //解決delay會有掉資料的問題
-    digitalWrite(DRE, HIGH);
+    digitalWrite(DE, HIGH);
     Serial2.println(num+pwm);
     Serial.println(num+pwm);
-    digitalWrite(DRE, LOW);
-    while (Serial2.available() > 0)
+    Serial2.flush();
+    digitalWrite(DE, LOW);
+    Serial.println(Serial2.available());
+    if (Serial2.available() > 75)
     {
-        GG = Serial2.read();
-        Serial.write(GG);
-        Serial.flush();
+        while (Serial2.available() > 0)
+        {
+
+            GG = Serial2.read();
+            Serial.write(GG);
+            Serial.flush();
+        }
     }
+    else
+    {
+        while (Serial2.read() > 0){}
+    }
+    
 }
