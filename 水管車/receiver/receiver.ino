@@ -86,7 +86,6 @@ void loop()
     if (Serial2.available() > 0)
     {
         numder = Serial2.parseInt();
-        while (Serial2.read() >= 0){}
         Serial.println(numder);
         Serial.println(Serial2.available());
         if (numder < 14){num = numder;}
@@ -186,32 +185,31 @@ void loop()
             Serial.println("15");
             if (moto0<=180)
             {
-                Serial.println("done");
-                moto0+=5;
+                moto0++;
                 pwm.setPWM(0, 0, pulseWidth(moto0));
             }
             break;
         case 30:
             Serial.println("30");
-            if (moto0>=0)
+            if (moto0>=160)
             {
-                moto0-=5;
+                moto0--;
                 pwm.setPWM(0, 0, pulseWidth(moto0));
             }
             break;
         case 45:
             Serial.println("45");
-            if (moto1<=180)
+            if (moto1<=130)
             {
-                moto1+=5;
+                moto1++;
                 pwm.setPWM(1, 0, pulseWidth(moto1));
             }
             break;
         case 60:
             Serial.println("60");
-            if (moto1>=0)
+            if (moto1>=70)
             {
-                moto1-=5;
+                moto1--;
                 pwm.setPWM(1, 0, pulseWidth(moto1));
             }
             break;
@@ -219,15 +217,15 @@ void loop()
             Serial.println("75");
             if (moto2<=180)
             {
-                moto2+=5;
+                moto2++;
                 pwm.setPWM(2, 0, pulseWidth(moto2));
             }
             break;
         case 90:
             Serial.println("90");
-            if (moto2>=0)
+            if (moto2>=100)
             {
-                moto2-=5;
+                moto2--;
                 pwm.setPWM(2, 0, pulseWidth(moto2));
             }
             break;
@@ -237,9 +235,9 @@ void loop()
     String alldata = "{\"L\":\""+String(Lcounter)+"\",\"R\":\""+Rcounter+"\",\"X\":\""+x+"\",\"Y\":\""+y+"\",\"Z\":\""+z+"\",\"H\":\""+h+"\",\"T\":\""+t+"\"}";
     Serial2.println(alldata);
     Serial2.flush();
+    while (Serial2.read() >= 0){}
+    delay(10);
     digitalWrite(DE, LOW);
-    while (Serial2.read() > 0){}
-    delay(5);
 }
 void Ldata()
 {
