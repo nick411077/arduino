@@ -82,12 +82,10 @@ void loop()
     int z = analogRead(A5); //read from zpin
     float h = dht.readHumidity();
     float t = dht.readTemperature();
-    Serial.println(t);
     if (Serial2.available() > 0)
     {
         numder = Serial2.parseInt();
         Serial.println(numder);
-        Serial.println(Serial2.available());
         if (numder < 14){num = numder;}
         if (numder < 29 && numder > 14){num = numder - 15;moto = 15;}
         if (numder < 44 && numder > 29){num = numder - 30;moto = 30;}
@@ -104,7 +102,7 @@ void loop()
             AnalogWrite(A0, 255);
             DigitalWrite(7, HIGH);
             DigitalWrite(6, LOW);
-            AnalogWrite(A2, 255);
+            AnalogWrite(A1, 255);
             break;
         case 2:
             Serial.println("R");
@@ -113,7 +111,7 @@ void loop()
             AnalogWrite(A0, 255);
             DigitalWrite(7, LOW);
             DigitalWrite(6, HIGH);
-            AnalogWrite(A2, 255);
+            AnalogWrite(A1, 255);
             break;
         case 3:
             Serial.println("FR");
@@ -122,7 +120,7 @@ void loop()
             AnalogWrite(A0, 255);
             DigitalWrite(7, HIGH);
             DigitalWrite(6, LOW);
-            AnalogWrite(A2, 155);
+            AnalogWrite(A1, 155);
             break;
         case 4:
             Serial.println("L");
@@ -131,7 +129,7 @@ void loop()
             AnalogWrite(A0, 255);
             DigitalWrite(7, HIGH);
             DigitalWrite(6, LOW);
-            AnalogWrite(A2, 255);
+            AnalogWrite(A1, 255);
             break;
         case 5:
             Serial.println("FL");
@@ -140,7 +138,7 @@ void loop()
             AnalogWrite(A0, 155);
             DigitalWrite(7, HIGH);
             DigitalWrite(6, LOW);
-            AnalogWrite(A2, 255);
+            AnalogWrite(A1, 255);
             break;
         case 8:
             Serial.println("B");
@@ -149,7 +147,7 @@ void loop()
             AnalogWrite(A0, 255);
             DigitalWrite(7, LOW);
             DigitalWrite(6, HIGH);
-            AnalogWrite(A2, 255);
+            AnalogWrite(A1, 255);
             break;
         case 10:
             Serial.println("BR");
@@ -158,7 +156,7 @@ void loop()
             AnalogWrite(A0, 255);
             DigitalWrite(7, LOW);
             DigitalWrite(6, HIGH);
-            AnalogWrite(A2, 155);
+            AnalogWrite(A1, 155);
             break;
         case 12:
             Serial.println("BL");
@@ -167,7 +165,7 @@ void loop()
             AnalogWrite(A0, 155);
             DigitalWrite(7, LOW);
             DigitalWrite(6, HIGH);
-            AnalogWrite(A2, 255);
+            AnalogWrite(A1, 255);
             break;
         case 0:
             Serial.println("S");
@@ -176,7 +174,7 @@ void loop()
             AnalogWrite(A0, 255);
             DigitalWrite(7, HIGH);
             DigitalWrite(6, HIGH);
-            AnalogWrite(A2, 255);
+            AnalogWrite(A1, 255);
             break;
         }
         switch (moto)
@@ -231,13 +229,11 @@ void loop()
             break;
         }
     }
-    digitalWrite(DE, HIGH);
     String alldata = "{\"L\":\""+String(Lcounter)+"\",\"R\":\""+Rcounter+"\",\"X\":\""+x+"\",\"Y\":\""+y+"\",\"Z\":\""+z+"\",\"H\":\""+h+"\",\"T\":\""+t+"\"}";
     Serial2.println(alldata);
     Serial2.flush();
     while (Serial2.read() >= 0){}
-    delay(10);
-    digitalWrite(DE, LOW);
+    delay(5);
 }
 void Ldata()
 {

@@ -56,8 +56,6 @@ void loop()
 {
     num = 0;
     pwm = 0;
-    if (error == 1) //skip loop if no controller found
-        return;
     ps2x.read_gamepad(false, 0);
     byte rxReading = ps2x.Analog(PSS_RX);
     byte ryReading = ps2x.Analog(PSS_RY);
