@@ -74,12 +74,12 @@ int dirL, dirR;               // 校正方向時的馬達轉向
 
 void loop() {
   line=0;
-   if (analogRead(0)<250){line=line+1;}
-   if (analogRead(1)<250){line=line+2;}
-   if (analogRead(2)<250){line=line+4;}
-   if (analogRead(3)<250){line=line+8;}
-   if (analogRead(6)<250){line=line+16;}
-   if (analogRead(7)<250){line=line+13;}
+   if (analogRead(0)<350){line=line+1;}
+   if (analogRead(1)<350){line=line+2;}
+   if (analogRead(2)<350){line=line+4;}
+   if (analogRead(3)<350){line=line+8;}
+   if (analogRead(6)<350){line=line+16;}
+   if (analogRead(7)<350){line=line+13;}
   //getFloorIR(false);          // 取得循軌感測器, 不送出感測值回 PC
   key = iTank.readKey();      // 取得 K0~K3 按鈕狀態 
   bumper = iTank.readTouch();

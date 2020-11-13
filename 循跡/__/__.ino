@@ -39,7 +39,7 @@ int Ultrasound(int trigPin, int echoPin)
   digitalWrite(trigPin, LOW);
   duration = pulseIn(echoPin, HIGH);
   duration = duration / 59;
-  if ((duration < 2) || (duration > 450))
+  if ((duration < 5) || (duration > 450))
     return false;
   return duration;
 }
@@ -60,7 +60,6 @@ void setup()
 {
   digitalWrite(12, LOW);
   Serial.begin(9600);
-  pinMode(13, INPUT);
   iTank.begin();    // 啟始程式庫
   iTank.clearLCD(); // 清除畫面
 
@@ -119,12 +118,7 @@ void loop()
     }
     break;
   case GO: // 循軌中
-    iArm.turnTo(180,169,90,22); 
-    delay(500);
-    iArm.turnTo(180,169,90,160);
-    delay(500);
-    iArm.turnTo(60,49,90,160);    // 稍微往上抬起手臂才不被置球底座卡住球
-    delay(500);
+    tryFollowLine();
     break;
   }
 }
