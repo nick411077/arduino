@@ -29,14 +29,11 @@ int Ultrasound(int trigPin, int echoPin)
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(20);
   digitalWrite(trigPin, LOW);
-  duration = pulseIn(echoPin, HIGH,4000);
+  duration = pulseIn(echoPin, HIGH,5000);
   duration = duration / 59;
-  if ((duration < 5) || (duration > 80)) return 100;
+  if ((duration < 5) || (duration > 50)) return 50;
   return duration;
 }
-
-
-
 
 
 #define STOP 0
@@ -55,8 +52,6 @@ byte key = 0;               // 儲存讀取的按鍵值
 byte line = 0;              // 儲存循軌值
 byte counts = 0;
 byte bumper;                // 儲存iTank前端碰撞感測器值
-int dataup;
-int datadown;
 
 unsigned long startTime=0;  // 記錄時間
 
@@ -115,32 +110,32 @@ void loop() {
     case GO:  // 循軌中
 
     //第1瓶
-        while ( ( (   Ultrasound( 12,11) ) > ( 14 ) ) )     //超音波值大於30cM就循黑線走
+        while ( ( (   Ultrasound( 12,11 ) ) > ( 25 ) ) )     //超音波值大於30cM就循黑線走
           {
           tryFollowLine();              //循黑線
           }
           Left();                       //避左邊
      //第2瓶
-          while ( ( (   Ultrasound( 12,11) ) > ( 14 ) ) )     //超音波值大於30cM就循黑線走
+          while ( ( (   Ultrasound( 12,11 ) ) > ( 25 ) ) )     //超音波值大於30cM就循黑線走
           {
           tryFollowLine();              //循黑線
           }
-          Left();                      //避右邊
+           Left();                     //避右邊
      //第3瓶
-          while ( ( (   Ultrasound( 12,11 ) ) > ( 24 ) ) )     //超音波值大於30cM就循黑線走
+          while ( ( (   Ultrasound( 12,11 ) ) > ( 30 ) ) )     //超音波值大於30cM就循黑線走
           {
-          tryFollowList();              //循黑線
+          tryFollowLine();              //循黑線
           }
-          owo();                       //避左邊
+           Right();                 //避左邊
           
           //再循7秒
           startTurn = millis();
           delay(20);
-          while ((millis() - startTurn) < 4000)   //再循7秒
+          while ((millis() - startTurn) < 7000)   //再循7秒
           {tryFollowLine();}
            
     //結束   
-    while ((analogRead(0)>350) && (analogRead(7)>350) )     //左1或右1沒碰到黑線
+    while (analogRead(0)>350 && (analogRead(7)>350) )     //左1或右1沒碰到黑線
           {
           tryFollowLine();              //循黑線
           } 
@@ -155,33 +150,17 @@ void loop() {
 
 void tryFollowLine(void)      //循軌副程式
 {
-         if (analogRead(0)<350){iTank.writeMotor(-4,7);}                     //黑線在最左邊
-         if (analogRead(0)<350 && analogRead(1)<350 ){iTank.writeMotor(-2,7);}
-         if (analogRead(1)<350){iTank.writeMotor(-1,5);}                              //黑線在左邊
-         if (analogRead(1)<350 && analogRead(2)<350 ){iTank.writeMotor(2,7);}
-         if (analogRead(2)<350){iTank.writeMotor(2,6);}
-         if (analogRead(2)<350 && analogRead(3)<350 ){iTank.writeMotor(7,7);}         //黑線在中間
-         if (analogRead(3)<350){iTank.writeMotor(6,2);}
-         if (analogRead(3)<350 && analogRead(6)<350 ){iTank.writeMotor(7,2);}
-         if (analogRead(6)<350){iTank.writeMotor(5,-1);}                              //黑線在右邊
-         if (analogRead(6)<350 && analogRead(7)<350 ){iTank.writeMotor(7,-2);}
-         if (analogRead(7)<350){iTank.writeMotor(7,-4);}                              //黑線在最右邊
-         delay(20);
-
-  }
-void tryFollowList(void)      //循軌副程式
-{
-         if (analogRead(0)<350){iTank.writeMotor(-4,6);}                     //黑線在最左邊
-         if (analogRead(0)<350 && analogRead(1)<350 ){iTank.writeMotor(-2,5);}
-         if (analogRead(1)<350){iTank.writeMotor(-1,6.5);}                              //黑線在左邊
+         if (analogRead(0)<350){iTank.writeMotor(-4,4);}                     //黑線在最左邊
+         if (analogRead(0)<350 && analogRead(1)<350 ){iTank.writeMotor(-2,4);}
+         if (analogRead(1)<350){iTank.writeMotor(-2,5);}                              //黑線在左邊
          if (analogRead(1)<350 && analogRead(2)<350 ){iTank.writeMotor(1,7);}
-         if (analogRead(2)<350){iTank.writeMotor(1,6);}
-         if (analogRead(2)<350 && analogRead(3)<350){iTank.writeMotor(6,6);}         //黑線在中間
-         if (analogRead(3)<350){iTank.writeMotor(6,1);}
+         if (analogRead(2)<350){iTank.writeMotor(1,5);}
+         if (analogRead(2)<350 && analogRead(3)<350){iTank.writeMotor(4,4);}         //黑線在中間
+         if (analogRead(3)<350){iTank.writeMotor(5,1);}
          if (analogRead(3)<350 && analogRead(6)<350 ){iTank.writeMotor(7,1);}
-         if (analogRead(6)<350){iTank.writeMotor(6.5,-1);}                              //黑線在右邊
-         if (analogRead(6)<350 && analogRead(7)<350 ){iTank.writeMotor(5,-2);}
-         if (analogRead(7)<350){iTank.writeMotor(6,-4);}                              //黑線在最右邊
+         if (analogRead(6)<350){iTank.writeMotor(5,-2);}                              //黑線在右邊
+         if (analogRead(6)<350 && analogRead(7)<350 ){iTank.writeMotor(4,-2);}
+         if (analogRead(7)<350){iTank.writeMotor(4,-4);}                              //黑線在最右邊
          
          delay(20);
 
@@ -190,45 +169,45 @@ void tryFollowList(void)      //循軌副程式
   //退後車身對齊黑線（校正）
   void Left(void)      
   {
-          iTank.writeMotor(-3,-3);    //加反向，退後
-          delay(250);
+          iTank.writeMotor(-2,-2);    //加反向，退後
+          delay(200);
          while  (analogRead(7)>350){    //左轉到右邊光感碰到黑線
           iTank.writeMotor(-4,4);
          }
          delay(200);                    //仰角大一點
          
-         iTank.writeMotor(7,7);        //前進到瓶子左側
-         delay(700);
-         iTank.writeMotor(7,-7);        //轉回黑線
-         delay(650);
+         iTank.writeMotor(4,4);        //前進到瓶子左側
+         delay(1050);
+         iTank.writeMotor(4,-3);        //轉回黑線
+         delay(1000);
          while  (analogRead(3)>350){
          iTank.writeMotor(2,2);        //前進到黑線停止
          }
-         iTank.writeMotor(-4,4); 
+         iTank.writeMotor(-2,2); 
          delay(200);     
               
   }
-void owo(void)
-{
-  iTank.writeMotor(-2, -2);
-  delay(400);
-  //1左閃
-  //2右閃
-  //3左閃
-  while (analogRead(0) > 350)
-  { //右轉到左邊光感碰到黑線
-    iTank.writeMotor(4, -4);
-  }
-  delay(300); //仰角大一點
-
-  iTank.writeMotor(4, 4); //前進到瓶子左側
-  delay(800);
-  iTank.writeMotor(-4, 5); //轉回黑線
-  delay(800);
-  while (analogRead(3) > 350)
+  
+void Right(void)      
   {
-    iTank.writeMotor(2, 2); //前進到黑線停止
+            iTank.writeMotor(-2,-2);
+          delay(300);
+                                        //1左閃
+                                        //2右閃
+                                        //3左閃
+         while  (analogRead(1)>350 ){    //右轉到左邊光感碰到黑線
+          iTank.writeMotor(4,-4);
+         }
+         delay(600);                    //仰角大一點
+         
+         iTank.writeMotor(4,4);        //前進到瓶子左側
+         delay(900);
+         iTank.writeMotor(-4,4);        //轉回黑線
+         delay(850);
+         while  (analogRead(3)>350){
+         iTank.writeMotor(2,2);        //前進到黑線停止
+         }
+         iTank.writeMotor(2,-2); 
+         delay(200);     
+              
   }
-  iTank.writeMotor(5, -3);
-  delay(400);
-}

@@ -1,5 +1,5 @@
 
-#include <FlagTank.h>       // 引用 iTank 函式庫
+ #include <FlagTank.h>       // 引用 iTank 函式庫
 #include <FlagTankVision.h> // 引用 iVision 函式庫
 #include <FlagTankArm.h>   // 引用 iArm 函式庫
 
@@ -17,32 +17,15 @@ typedef enum {
 
 #define BALL_R_MIN 40   // 找球時的最小球體半徑
 #define BALL_R_STOP 130 // 靠近球時停車的球體半徑
-#define BALL_R_MAX 190  // 找到並靠近球後, 調整面對球時的球體半徑
-#define BALL_X 170
+#define BALL_R_MAX 200  // 找到並靠近球後, 調整面對球時的球體半徑
+#define BALL_X 200
 
 State_Type state = ST_STOP;
-
-int Ultrasound(int trigPin, int echoPin)
-{
-  long duration;
-  pinMode(trigPin, OUTPUT);
-  pinMode(echoPin, INPUT);
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(20);
-  digitalWrite(trigPin, LOW);
-  duration = pulseIn(echoPin, HIGH,4000);
-  duration = duration / 59;
-  if ((duration < 5) || (duration > 80)) return 100;
-  return duration;
-}
-
 int key;
 // 開始尋找 RGB 值為 240, 93, 23 的橘色物體
 // H、S、V 誤差容許範圍為 +-4, +-40%, +-100%
-byte ballColor[] = {203, 61, 3, 4, 40, 100};
-byte gateColor[] = {149, 177, 132, 4, 40, 100};
+byte ballColor[] = {255, 112, 63, 4, 40, 100};
+byte gateColor[] = {165, 207, 155, 4, 40, 100};
 int counts;   // 用來計數連續多次取得同一資訊才算條件成立
 int centerR;  // 正對球體時的球體半徑
 int centerX;  // 正對球體時的球體 X 座標
@@ -76,7 +59,7 @@ void loop() {
     counts++;                         // 遞增計數
     iTank.writeLCD(1, "     ");       // 清除第 1 列文字
     iTank.writeLCD(1, counts);        // 顯示目前計數
-    iTank.writeLCD(2, Ultrasound(12,11));  // 顯示訊息類別
+    iTank.writeLCD(2, iVision.type);  // 顯示訊息類別
     char blank[] = "    ";
     // 在 LCD 顯示物體座標
     iTank.writeLCD(3, String("xy=") + iVision.x+", " + iVision.y + blank);
@@ -88,9 +71,7 @@ void loop() {
   switch(state) {
     case ST_STOP:                 // 停止狀態下的處理
       if(key == 8) {              // 按了 K3
-        state = ST_FINDBALL;
-        iTank.writeMotor(2,2);
-        delay(1200);    // 進入找球狀態
+        state = ST_FINDBALL;      // 進入找球狀態
         iArm.turnTo(20,49,28,22); // 先把手臂擺定位
         delay(100);
         counts = 0;               // 計數歸零
@@ -109,7 +90,7 @@ void loop() {
       }
       else {
         counts = 0;                 // 辨識條件不符, 計數歸零
-        iTank.writeMotor(-1, 2);    // 慢速左轉繼續找球
+        iTank.writeMotor(-1, 1);    // 慢速左轉繼續找球
         delay(100);         
         iTank.writeMotor(0, 0);
         delay(100);                 // 要有間隔時間辨識
@@ -133,7 +114,7 @@ void loop() {
         centerX = iVision.x;
       }
       else {
-        iTank.writeMotor(-1, 2);      // 慢速左轉繼續找球
+        iTank.writeMotor(-1, 1);      // 慢速左轉繼續找球
         delay(100);         
         iTank.writeMotor(0, 0);
         delay(100);                   // 要有間隔時間辨識
@@ -144,7 +125,7 @@ void loop() {
         state = ST_GRABBALL;                  // 準備抓球
       }
       else if(centerX > 120) {                // 太偏左
-        iTank.writeMotor(2,-1);               // 慢速右轉回正中央
+        iTank.writeMotor(1,-1);               // 慢速右轉回正中央
         delay(100);
         iTank.writeMotor(0,0);
         delay(100);
@@ -154,14 +135,14 @@ void loop() {
       iArm.turnTo(180,169,90,22);   // 將手臂平放伸直準備抓球
       delay(500);
       iTank.writeMotor(1,1);        // 向前推進讓抓爪靠球體邊緣
-      delay((centerX > 120) ? 450 : 400);
+      delay((centerX > 120) ? 250 : 200);
       iTank.writeMotor(0,0);
       iArm.turnTo(180,169,90,150);  // 將抓爪合閉抓住球
       delay(500);
       iArm.turnTo(60,49,90,150);    // 稍微往上抬起手臂才不被置球底座卡住球
       delay(500);
-      iTank.writeMotor(-1,-1);      // 後退讓球遠離置球底座
-      delay(800);
+      iTank.writeMotor(-2,-2);      // 後退讓球遠離置球底座
+      delay(1000);
       iTank.writeMotor(0,0);
       delay(500);
       iArm.turnTo(20,49,90,150);    // 將手臂高舉恢復回行進姿勢才不會擋到攝影機
@@ -173,14 +154,14 @@ void loop() {
       if(iVision.type == 'r') {
         iVision.showMsg(String("GF_X:") + iVision.x + "\n");
         iVision.showMsg(String("GF_R:") + iVision.r + "\n");
-        if(iVision.x < 450 &&       // 在斜角度找到置球區
-            iVision.x > 350) {
+        if(iVision.x < 400 &&       // 在斜角度找到置球區
+            iVision.x > 200) {
           state = ST_GOFORGATE;     // 進入前進到置球區的狀態
           iTank.writeMotor(1,1);    // 前進
           break;
         }
       }
-      iTank.writeMotor(2,-2);       // 慢慢右轉找置球區
+      iTank.writeMotor(1,0);       // 慢慢右轉找置球區
       delay(100);
       iTank.writeMotor(0, 0);
       delay(100);
@@ -189,26 +170,21 @@ void loop() {
       if(iVision.type == 'r') {
         iVision.showMsg(String("GG_X:") + iVision.x + "\n");
         iVision.showMsg(String("GG_R:") + iVision.r + "\n");
-        if(iVision.r > 250) {     // 辨識到的置球區半徑夠大, 表示已經在置球區邊緣
+        if(iVision.r > 210) {     // 辨識到的置球區半徑夠大, 表示已經在置球區邊緣
           state = ST_PUTBALL;     // 進入放球的狀態
           iTank.writeMotor(0,0);
         }
       }
       break;
     case ST_PUTBALL:
-      iTank.writeMotor(1,1);
-      delay(500);
-      iTank.stop();
+      iTank.writeMotor(0,0);
       iArm.turnTo(180,169,90,150);    // 將手臂平放
       delay(500);
       iArm.turnTo(180,169,90,80);     // 鬆開抓爪護住球, 避免球亂彈
       delay(500);
       iArm.turnTo(180,169,90,22);     // 抓爪全開
       delay(500);
-      iTank.writeMotor(-1,-1);
-      delay(100);
       state = ST_STOP;
-      iTank.stop();
       iVision.findColor(ballColor, 6);// 恢復成辨識球體的顏色
       iArm.turnTo(20,49,28,180);       // 高舉手臂擺定位
       break;

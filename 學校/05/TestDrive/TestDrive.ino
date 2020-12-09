@@ -17,10 +17,9 @@ int Ultrasound(int trigPin, int echoPin)
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(20);
   digitalWrite(trigPin, LOW);
-  duration = pulseIn(echoPin, HIGH);
+  duration = pulseIn(echoPin, HIGH,5000);
   duration = duration / 59;
-  if ((duration < 5) || (duration > 80))
-    return 100;
+  if ((duration < 5) || (duration > 50)) return 50;
   return duration;
 }
 //----------------1234567890123

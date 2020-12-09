@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <style>
+    body {
+      text-align: center;
+      font-family: "Trebuchet MS", Arial;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .slider {
+      width: 300px;
+    }
+  </style>
+  <script src="jquery-3.3.1.min.js"></script>
+</head>
+
+<body>
+  <h1>ESP32 with Servo</h1>
+  <input type="button" style="width:100px;height:100px;font-size:40px;" class="push1" id="motoSlider1" value="\" name="1" />
+  <input type="button" style="width:100px;height:100px;font-size:40px;" class="push1" id="motoSlider2" value="^" name="2" />
+  <input type="button" style="width:100px;height:100px;font-size:40px;" class="push1" id="motoSlider3" value="/" name="3" />
+  <br>
+  <input type="button" style="width:100px;height:100px;font-size:40px;" class="push1" id="motoSlider4" value="<" name="4" />
+  <input type="button" style="width:100px;height:100px;font-size:40px;" class="push1" id="motoSlider5" value="Stop" name="5" />
+  <input type="button" style="width:100px;height:100px;font-size:40px;" class="push1" id="motoSlider6" value=">" name="6" />
+  <br>
+  <input type="button" style="width:100px;height:100px;font-size:40px;" class="push1" id="motoSlider7" value="/" name="7" />
+  <input type="button" style="width:100px;height:100px;font-size:40px;" class="push1" id="motoSlider8" value="v" name="8" />
+  <input type="button" style="width:100px;height:100px;font-size:40px;" class="push1" id="motoSlider9" value="\" name="9" />
+  <p>Position: <span id="servoPos"></span> value: <span id="motoPos"></span></p>
+  <input type="range" min="0" max="180" class="slider" id="servoSlider" onchange="all_value(this.value,moto)" value="+valueString+" />
+  <script>
+    var push = document.getElementsByClassName("push1");
+    var motoP = document.getElementById("motoPos");
+    motoP.innerHTML = push[4].value;
+    for (var i = 0; i < push.length; i++) {
+      push[i].onclick = function () {
+        motoP.innerHTML = this.value;
+        moto = this.name;
+        all_value(slider.value, this.name);
+      }
+    }
+    var slider = document.getElementById("servoSlider");
+    var servoP = document.getElementById("servoPos");
+    servoP.innerHTML = slider.value;
+    slider.oninput = function () {
+      slider.value = this.value;
+      servoP.innerHTML = this.value;
+    }
+    $.ajaxSetup({ timeout: 1000 });
+    function all_value(pos, pos3) {
+      $.get("/?value=" + pos + "&moto=" + pos3 + "&");
+      { Connection: close };
+    }
+  </script>
+  </body>
+
+  </html>

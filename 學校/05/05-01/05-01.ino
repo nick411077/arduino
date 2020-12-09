@@ -216,7 +216,7 @@ void loop() {
       }
       else
       {
-      tryFollowLine();}          // 尚未到達起點線前循軌前進
+      tryFollowList();}          // 尚未到達起點線前循軌前進
       break;
   } // end of switch(state)
 }
@@ -263,6 +263,22 @@ void tryFollowLine(void)
         break;         
     }
     delay(20);
+}
+
+void tryFollowList(void)      //循軌副程式
+{
+         if (analogRead(0)<350){iTank.writeMotor(-4,7);}                     //黑線在最左邊
+         if (analogRead(0)<350 && analogRead(1)<350 ){iTank.writeMotor(-2,7);}
+         if (analogRead(1)<350){iTank.writeMotor(-1,5);}                              //黑線在左邊
+         if (analogRead(1)<350 && analogRead(2)<350 ){iTank.writeMotor(2,7);}
+         if (analogRead(2)<350){iTank.writeMotor(2,6);}
+         if (analogRead(2)<350 && analogRead(3)<350 ){iTank.writeMotor(7,7);}         //黑線在中間
+         if (analogRead(3)<350){iTank.writeMotor(6,2);}
+         if (analogRead(3)<350 && analogRead(6)<350 ){iTank.writeMotor(7,2);}
+         if (analogRead(6)<350){iTank.writeMotor(5,-1);}                              //黑線在右邊
+         if (analogRead(6)<350 && analogRead(7)<350 ){iTank.writeMotor(7,-2);}
+         if (analogRead(7)<350){iTank.writeMotor(7,-4);}                              //黑線在最右邊
+         delay(20);
 }
 
 // 校正車體方向
