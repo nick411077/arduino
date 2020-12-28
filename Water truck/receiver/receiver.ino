@@ -244,11 +244,11 @@ void Ldata()
 
         if (Position(4) != LaState)
         {               //條件判斷，當outputB讀取值 不等於 aState時發生
-            Lcounter++; //計數器+1
+            Lcounter--; //計數器+1
         }
         else
         {
-            Lcounter--; //計數器-1
+            Lcounter++; //計數器-1
         }
     }
     LaLastState = LaState; //將aState 最後的值 設給 aLastState
@@ -262,11 +262,11 @@ void Rdata()
 
         if (Position(5) != RaState)
         {               //條件判斷，當outputB讀取值 不等於 aState時發生
-            Rcounter--; //計數器+1
+            Rcounter++; //計數器+1
         }
         else
         {
-            Rcounter++; //計數器-1
+            Rcounter--; //計數器-1
         }
     }
     RaLastState = RaState; //將aState 最後的值 設給 aLastState

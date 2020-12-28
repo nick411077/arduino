@@ -54,9 +54,12 @@
 
 ### Controller bug
 目前嚴重問題UART<br>
-RS485半雙工 因為線路共用 會有衝突 <br>
-RS232
+RS485半雙工 因為線路共用 會有衝突 解決了換成全雙工就沒問題<br> 
+
 
 
 # Receiver<h2>是遠端車子端
 ### Receiver程式分類
+
+DHT libraries 要改
+DHT.cpp 86行 delay(250) 改成delay(10) 

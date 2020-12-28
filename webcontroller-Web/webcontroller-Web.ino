@@ -8,7 +8,14 @@
 #include <Servo.h>
 #include <ESPAsyncWebServer.h>
 #include <analogWrite.h>
+#include <AccelStepper.h>
 
+int pulse = 26, dir = 27, enable = 14; //Arduino給驅動器的腳位
+int light = 34;
+int MaxSpeed = 20000;
+int Acceleration = 2000;
+int Max = 60000;
+AccelStepper stepper(1,pulse,dir);
 
 
 Servo myservo;  // create servo object to control a servo
@@ -31,6 +38,7 @@ AsyncWebServer server(80);
 String valueString = String(90);
 String BtnValue = String(5);
 uint8_t resolution =13;
+int value;
 
 void DigitalWrite(int pinNumber, boolean status)
 {
@@ -45,8 +53,12 @@ void setup() {
      return;
   }
   Serial.begin(115200);
-  myservo.attach(servoPin,5,0,180,500,2400);  // attaches the servo on the servoPin to the servo object
-  myservo.write(valueString.toInt());
+  //myservo.attach(servoPin,5,0,180,500,2400);  // attaches the servo on the servoPin to the servo object
+  //myservo.write(valueString.toInt());
+  stepper.setEnablePin(enable);
+  stepper.disableOutputs();
+  stepper.setMaxSpeed(MaxSpeed);
+  stepper.setAcceleration(Acceleration);
   // Connect to Wi-Fi network with SSID and password
   Serial.print("Connecting to ");
   Serial.println(ssid);
@@ -71,9 +83,12 @@ void setup() {
         BtnValue = request->arg(i);
       }
     }
+    value = map(valueString.toInt(),0,180,0,Max);
     Serial.println(valueString);
     Serial.println(BtnValue);
-    myservo.write(valueString.toInt());
+    stepper.moveTo(value);
+    stepper.run();
+    //myservo.write(valueString.toInt());
     switch (BtnValue.toInt()){ //控制
     case 1: // 左前
       DigitalWrite(18, HIGH);
@@ -150,6 +165,7 @@ void setup() {
     }
     request->send(SPIFFS, "/index.html", "text/html");
   });
+  server.onRequestBody([](AsyncWebServerRequest *request));
   server.on("/jquery-3.3.1.min.js", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/jquery-3.3.1.min.js", "text/javascript");
   });
