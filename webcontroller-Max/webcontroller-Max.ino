@@ -7,20 +7,18 @@
 #include <SPIFFS.h>
 #include <Servo.h>
 #include <ESPAsyncWebServer.h>
-#include <analogWrite.h>
 #include <AccelStepper.h>
-#include <DBH1.h> // DBH1.cpp 第178行 IN2A 應該是 IN1B
 
 int pulse = 19, dir = 18, enable = 5; //Arduino給驅動器的腳位
 int light1=35, light2=34, light3=39;
-int ReMaxSpeed = 2000;
-int ReAcceleration = 200;
-int MaxSpeed = 20000;
-int Acceleration = 2000;
+int ReMaxSpeed = 20000;
+int ReAcceleration = 2000;
+int MaxSpeed = 40000;
+int Acceleration = 4000;
 int Max = 60000;
 AccelStepper stepper(1,pulse,dir);
-DBH1 dbh1;
 
+Servo RCmoto;
 Servo RC1;
 Servo RC2;  // create servo object to control a servo
 // twelve servo objects can be created on most boards
@@ -30,6 +28,7 @@ Servo RC2;  // create servo object to control a servo
 // Replace with your network credentials
 const char* ssid     = "Lavender";
 const char* password = "12345678";
+const int RCPinmoto = 27;
 const int RCPin1 = 26;
 const int RCPin2 = 25;
 
@@ -41,8 +40,8 @@ AsyncWebServer server(80);
 
 // Decode HTTP GET value
 String valueString = String(90);
-String CarValue = String(4);
-String MotoValue = String(1);
+String CarValue = String(5);
+String MotoValue = String(2);
 uint8_t resolution =13;
 int value;
 
@@ -64,13 +63,17 @@ void setup() {
      return;
   }
   Serial.begin(115200);
-  RC1.attach(RCPin1,5,0,180,1000,2000);  // attaches the servo on the servoPin to the servo object
-  RC2.attach(RCPin2,5,0,180,1000,2000);
-  RC1.write(90);
-  RC2.write(90);
+  RCmoto.attach(RCPinmoto,5,0,180,1000,2000);
+  //RC1.attach(RCPin1,5,0,180,1000,2000);  // attaches the servo on the servoPin to the servo object
+  //RC2.attach(RCPin2,5,0,180,1000,2000);
+  //RC1.write(90);
+  //RC2.write(90);
   pinMode(pulse, OUTPUT);
   pinMode(dir, OUTPUT);
   pinMode(enable, OUTPUT);
+  pinMode(light1,INPUT);
+  pinMode(light2,INPUT);
+  pinMode(light3,INPUT);
   digitalWrite(dir,HIGH);
   digitalWrite(enable,LOW);
   stepper.setEnablePin(enable);
@@ -103,7 +106,7 @@ void setup() {
       }
       else if (request->argName(i) == "moto")
       {
-        CarValue = request->arg(i);
+        MotoValue = request->arg(i);
       }
     }
     value = map(valueString.toInt(),0,180,0,Max);
@@ -115,56 +118,50 @@ void setup() {
     //RC1.write(valueString.toInt());
     switch (MotoValue.toInt())
     {
-    case 0:
-      DigitalWrite(17, HIGH);
-      DigitalWrite(16, LOW);
-      analogWrite(25, 225);
-      break;
     case 1:
-      DigitalWrite(17, HIGH);
-      DigitalWrite(16, HIGH);
-      analogWrite(25, 225);
+      RCmoto.write(0);
       break;
     case 2:
-      DigitalWrite(17, LOW);
-      DigitalWrite(16, HIGH);
-      analogWrite(25, 225);
+      RCmoto.write(90);
+      break;
+    case 3:
+      RCmoto.write(180);
       break;
     
     }
     switch (CarValue.toInt()){ //控制
-    case 0: // 左前
+    case 1: // 左前
       RC1.write(135);
       RC2.write(180);
       break;
-    case 1: // 前
+    case 2: // 前
       RC1.write(180);
       RC2.write(180);
       break;
-    case 2: // 右前
+    case 3: // 右前
       RC1.write(180);
       RC2.write(135);
       break;
-    case 3: // 左
+    case 4: // 左
       RC1.write(0);
       RC2.write(180);
       break;
-    case 4: // 停
+    case 5: // 停
       RC1.write(90);
       RC2.write(90);
       break;
-    case 5: // 右
+    case 6: // 右
       RC1.write(180);
       RC2.write(0);
       break;
-    case 6: // 左後
+    case 7: // 左後
       RC1.write(0);
       RC2.write(45);
       break;
-    case 7: // 後
+    case 8: // 後
       RC1.write(0);
       RC2.write(0);
-    case 8: // 右後
+    case 9: // 右後
       RC1.write(45);
       RC2.write(0);
       break;
@@ -186,4 +183,5 @@ void setup() {
 void loop()
 {
   stepper.run();
+  Serial.println(digitalRead(light1));
 }
