@@ -27,7 +27,7 @@ byte RightStopCMD[7] = {0xFF, 0x01, 0x00, 0x02, 0x00, 0x00, 0x03};
 //光遮設置
 int light1=35, light2=34, light3=39;
 //步進設置
-int pulse = 4, dir = 0, enable = 2; //Arduino給驅動器的腳位
+int pulse = 19, dir = 18, enable = 5; //Arduino給驅動器的腳位
 AccelStepper stepper(1,pulse,dir);
 int ReMaxSpeed = 20000;
 int ReAcceleration = 2000;
