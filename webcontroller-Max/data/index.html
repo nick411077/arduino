@@ -85,7 +85,7 @@
       push1[i].onclick = function () {
         carP.innerHTML = this.value;
         car = this.name;
-        ch();
+        car_value(car);
       }
     }
     var push2 = document.getElementsByClassName("push2");
@@ -96,7 +96,7 @@
       push2[i].onclick = function () {
         motoP.innerHTML = this.value;
         moto = this.name;
-        ch();
+        moto_value(moto);
       }
     }
     var push3 = document.getElementsByClassName("push3");
@@ -107,7 +107,7 @@
       push3[i].onclick = function () {
         YuntaiP.innerHTML = this.value;
         Yuntai = this.name;
-        ch();
+        Yuntai_value(Yuntai);
       }
     }
     var slider = document.getElementById("servoSlider");
@@ -116,14 +116,23 @@
     slider.oninput = function () {
       slider.value = this.value;
       servoP.innerHTML = this.value;
-      ch();
-    }
-    function ch(){
-      all_value(slider.value,car,moto,Yuntai)
+      slider_value(slider.value);
     }
     $.ajaxSetup({ timeout: 1000 });
-    function all_value(pos, pos1, pos2,pos3) {
-      $.get("/?value=" + pos + "&car=" + pos1 + "&moto=" + pos2 + "&Yuntai=" + pos3 + "&");
+    function slider_value(pos) {
+      $.get("/?value=" + pos + "&");
+      { Connection: close };
+    }
+    function car_value(pos) {
+      $.get("/?car=" + pos + "&");
+      { Connection: close };
+    }
+    function moto_value(pos) {
+      $.get("/?moto=" + pos + "&");
+      { Connection: close };
+    }
+    function Yuntai_value(pos) {
+      $.get("/?Yuntai=" + pos + "&");
       { Connection: close };
     }
   </script>
