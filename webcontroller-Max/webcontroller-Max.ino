@@ -7,7 +7,7 @@
 #include <Stepper.h>
 
 //雲台設置
-byte UpV = 30, DownV = 30, LeftV = 30, RightV = 30; //數值從$00(停止)到$3F(高速)
+byte UpV = 0x30, DownV = 0x30, LeftV = 0x30, RightV = 0x30; //數值從$00(停止)到$3F(高速)
 
 //byte UpCMD[7]={0xFF,0x01,0x00,0x08,0x00,0x38,0x41};
 byte UpCMD[7] = {0xFF, 0x01, 0x00, 0x08, 0x00, UpV, 0x09 + UpV};
@@ -27,7 +27,7 @@ byte RightStopCMD[7] = {0xFF, 0x01, 0x00, 0x02, 0x00, 0x00, 0x03};
 //光遮設置
 int light1=35, light2=34, light3=39;
 //步進設置
-int pulse = 4, dir = 0, enable = 2; //Arduino給驅動器的腳位
+int pulse = 19, dir = 18, enable = 5; //Arduino給驅動器的腳位
 AccelStepper stepper(1,pulse,dir);
 int ReMaxSpeed = 20000;
 int ReAcceleration = 2000;
@@ -73,7 +73,7 @@ void check()//進行步進初始位址
   {
     while (digitalRead(light1) == 1)
     {
-      stepper.setSpeed(5000);
+      stepper.setSpeed(10000);
       stepper.runSpeed();
     }
     restart();
@@ -129,6 +129,7 @@ void setup() {
   stepper.setMaxSpeed(ReMaxSpeed);
   stepper.setAcceleration(ReAcceleration);
   stepper.setCurrentPosition(0);
+  check();
   // Connect to Wi-Fi network with SSID and password
   Serial.print("Connecting to ");
   Serial.println(ssid);
@@ -217,30 +218,21 @@ void setup() {
     }
     switch (YuntaiValue.toInt())
     {       //控制
-    case 1: // 左前
+    case 1: // 前
       Up();
       break;
-    case 2: // 前
-      UpStop();
-      break;
-    case 3: // 右前
-      Down();
-      break;
-    case 4: // 左
-      DownStop();
-      break;
-    case 5: // 停
+    case 2: // 左
       Left();
       break;
-    case 6: // 右
+    case 3: // 停
       LeftStop();
+      DownStop();
       break;
-    case 7: // 左後
+    case 4: // 右
       Right();
       break;
-    case 8: // 後
-      RightStop();
-    case 9: // 右後
+    case 5: // 後
+      Down();
       break;
     }
     request->send(SPIFFS, "/index.html", "text/html");

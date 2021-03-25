@@ -22,10 +22,11 @@ int  t=0;
 int   x=0;      //0412計算總消耗功率的迴圈變數
 int   cc=600;   //0606契約容量(contract capacity)，超過契約容量系統開始做電力管制
 int   pc=0;    //20200607電力支路1的電力控制(power controll)標籤,pc>0代表現在系統正在管控電力
-const char* ssid = "iphone";
-const char* pass = "00000000";
+const char* ssid = "IoT office";
+const char* pass = "Iot5195911";
 
-MCSDevice mcs("DbreJyFf", "70czsc6qoroyAJju");
+MCSLiteDevice mcs("By1TVl7Vd", "ecce24aee7f994a6cc94c74c415acb7bb35c82431beffc58404d58f82d60874a","120.106.21.240",3000);
+//MCSDevice mcs("DbreJyFf", "70czsc6qoroyAJju");
 MCSControllerOnOff switch1("switch1");    //20200510彈性用電支路1網路開關
 MCSControllerOnOff switch2("switch2");    //20200606彈性用電支路2網路開關
 MCSControllerOnOff switch3("switch3");    //20200606彈性用電支路3網路開關
@@ -101,7 +102,7 @@ void loop()
   {
     mcsswitch();
     t++;
-    delay(1000);
+    delay(5000);
   }
   t =0;
   getdata();
@@ -113,7 +114,7 @@ void loop()
   {
     mcsswitch();
     t++;
-    delay(1000);
+    delay(5000);
   }
   t =0;
   getdata();
@@ -125,7 +126,7 @@ void loop()
   {
     mcsswitch();
     t++;
-    delay(1000);
+    delay(5000);
   }
   t =0;
   getdata();
@@ -160,30 +161,30 @@ while (!mcs.connected()) {
  //-----------------------------MCS電壓--------------------------------   
   if(vol>=0) 
   {
-    v.set(vol);
     Serial.print("voltage : ");
     Serial.println(vol);
+    v.set(vol);
   }
 //------------------------------MCS電流--------------------------------
   if(cur>=0)
-  {
-    i.set(cur);   
+  { 
     Serial.print("current :");
     Serial.println(cur);
+    //i.set(cur);  
   }
  //------------------------------MCS功耗-------------------------------- 
   if(powe>=0)
   {
-    p.set(powe);
     Serial.print("power :");
     Serial.println(powe);
+    //p.set(powe);
   }
 //------------------------------MCS總額----------------------------------  
   if(kwh>=0)
   {
     if(kwh==0.01)
     {
-     e.set(temp1);  
+     //e.set(temp1);  
 //     mcsswitch();       
      Serial.print("total power :");
      Serial.println(temp1);
@@ -191,8 +192,8 @@ while (!mcs.connected()) {
     }
   else
     {
-     e.set(kwh);
-     disp_channel();
+     //e.set(kwh);
+     //disp_channel();
      temp1=kwh;
      mcsswitch();
      Serial.print("total power :");
@@ -423,10 +424,10 @@ void mcsswitch() //20200510 mcs的開關控制
 void disp_channel() //20200606 計算並顯示第幾個電力支路
 {
   if (channelNo == 1)
-    pwr_channel.set("電力支路1"); //20200606
+    pwr_channel.set("1"); //20200606
   if (channelNo == 2)
-    pwr_channel.set("電力支路2"); //20200606
+    pwr_channel.set("2"); //20200606
   if (channelNo == 3)
-    pwr_channel.set("電力支路3"); //20200606
+    pwr_channel.set("3"); //20200606
 }
 //=========================================================================

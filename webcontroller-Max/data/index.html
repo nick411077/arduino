@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1" charset="utf-8">
   <link rel="icon" href="data:,">
   <style>
     body {
@@ -45,26 +45,18 @@
       name="9" />
   </div>
   <div class="YuntaiSlider">
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push3" id="YuntaiSlider1" value="\"
+    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push3" id="YuntaiSlider1" value="^"
       name="1" />
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push3" id="YuntaiSlider2" value="^"
+    <br>
+    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push3" id="YuntaiSlider2" value="<"
       name="2" />
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push3" id="YuntaiSlider3" value="/"
+    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push3" id="YuntaiSlider3" value="Stop"
       name="3" />
-    <br>
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push3" id="YuntaiSlider4" value="<"
+    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push3" id="YuntaiSlider4" value=">"
       name="4" />
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push3" id="YuntaiSlider5" value="Stop"
-      name="5" />
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push3" id="YuntaiSlider6" value=">"
-      name="6" />
     <br>
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push3" id="YuntaiSlider7" value="/"
-      name="7" />
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push3" id="YuntaiSlider8" value="v"
-      name="8" />
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push3" id="YuntaiSlider9" value="\"
-      name="9" />
+    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push3" id="YuntaiSlider5" value="v"
+      name="5" />
   </div>
   <br>
   <input type="button" style="width:100px;height:100px;font-size:40px;" class="push2" id="motoSlider1" value="下"
@@ -101,8 +93,8 @@
     }
     var push3 = document.getElementsByClassName("push3");
     var YuntaiP = document.getElementById("YuntaiPos");
-    YuntaiP.innerHTML = push3[4].value; //顯示預設的值 Stop
-    Yuntai = push3[4].name;
+    YuntaiP.innerHTML = push3[2].value; //顯示預設的值 Stop
+    Yuntai = push3[2].name;
     for (var i = 0; i < push3.length; i++) {
       push3[i].onclick = function () {
         YuntaiP.innerHTML = this.value;
@@ -116,10 +108,18 @@
     slider.oninput = function () {
       slider.value = this.value;
       servoP.innerHTML = this.value;
-      slider_value(slider.value);
+      delayShowData("slider",slider.value);
     }
+    var timers = {};
+      function delayShowData(type, values) {
+        clearTimeout(timers[type]);
+        timers[type] = setTimeout(function () {
+          $('span.' + type).text(values[0] + 'mm - ' + values[1] + 'mm');
+          slider_value(type, values);
+        }, 300);
+      }
     $.ajaxSetup({ timeout: 1000 });
-    function slider_value(pos) {
+    function slider_value(type,pos) {
       $.get("/?value=" + pos + "&");
       { Connection: close };
     }
