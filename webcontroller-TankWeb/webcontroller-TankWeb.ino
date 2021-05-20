@@ -25,7 +25,7 @@ byte LeftStopCMD[7] = {0xFF, 0x01, 0x00, 0x04, 0x00, 0x00, 0x05};
 byte RightCMD[7] = {0xFF, 0x01, 0x00, 0x02, RightV, 0x00, 0x03 + RightV};
 byte RightStopCMD[7] = {0xFF, 0x01, 0x00, 0x02, 0x00, 0x00, 0x03};
 //光遮設置
-int light1=35, light2=34, light3=39;
+int light1=35, light2=34;
 //步進設置
 int pulse = 19, dir = 18, enable = 5; //Arduino給驅動器的腳位
 AccelStepper stepper(1,pulse,dir);
@@ -110,7 +110,7 @@ void setup() {
   }
   Serial.begin(115200);
   Serial2.begin(9600);
-  RCmoto.attach(RCPinmoto,4,0,180,1000,2000);
+  RCmoto.attach(RCPinmoto,4,0,180,500,2400);
   RC1.attach(RCPin1,5,0,180,1000,2000);  // attaches the servo on the servoPin to the servo object
   RC2.attach(RCPin2,6,0,180,1000,2000);
   RC1.write(90);
@@ -121,7 +121,6 @@ void setup() {
   pinMode(enable, OUTPUT);
   pinMode(light1,INPUT);
   pinMode(light2,INPUT);
-  pinMode(light3,INPUT);
   digitalWrite(dir,HIGH);
   digitalWrite(enable,LOW);
   stepper.setEnablePin(enable);
