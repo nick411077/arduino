@@ -36,6 +36,7 @@ MCSDisplayFloat v("v");     //MCS電壓
 MCSDisplayFloat i("i");     //MCS電流
 MCSDisplayFloat p("p");     //MCS功率
 MCSDisplayFloat e("e");     //MCS總消耗功率
+MCSDisplayGPS gps("gps");
 //==============================================================================
 void DigitalWrite(int pinNumber, boolean status)
 {
@@ -54,6 +55,8 @@ void setup()
   mcs.addChannel(switch3);    //20200606
   mcs.addChannel(pwr_channel);  //20200606
   mcs.addChannel(pwr_monitor);  //20200707
+  mcs.addChannel(gps);
+  gps.set(  );
   Serial.print("Wi-Fi connecting to");
   Serial.println(ssid);
   WiFi.begin(ssid, pass);

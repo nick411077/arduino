@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" charset="utf-8">
+  <link rel="icon" href="data:,">
+  <style>
+    body {
+      text-align: center;
+      font-family: "Trebuchet MS", Arial;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .B {
+      width: 300px;
+    }
+  </style>
+  <script src="jquery-3.3.1.min.js"></script>
+</head>
+
+<body>
+  <h1>ESP32 with RGB house</h1>
+  <div class="RGB1_">
+    <h1>RGB1</h1>
+    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push2" id="RGB1_1" value="ON"
+      name="1" />
+    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push2" id="RGB1_2" value="OFF"
+      name="2" />
+    </div>
+  <div class="RGB2_">
+    <h1>RGB2</h1>
+    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push3" id="RGB2_1" value="ON"
+      name="1" />
+    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push3" id="RGB2_2" value="OFF"
+      name="2" />
+  </div>
+  <p> ledvalue: <span id="ledPos"></span> rgb1value: <span id="rgb1Pos"></span>
+    rgb2value: <span id="rgb2Pos"></span></p>
+  <p>R: <span id="RPos"></span><input type="range" min="0" max="255" class="R" id="R_" value="255" /><br>
+  <p>G: <span id="GPos"></span><input type="range" min="0" max="255" class="G" id="G_" value="255" /><br>
+  <p>B: <span id="BPos"></span><input type="range" min="0" max="255" class="B" id="B_" value="255" /><br>
+  <script>
+    var push2 = document.getElementsByClassName("push2");
+    var rgb1P = document.getElementById("rgb1Pos");
+    rgb1P.innerHTML = push2[1].value; //顯示預設的值 一
+    rgb1 = push2[1].value;
+    for (var i = 0; i < push2.length; i++) {
+      push2[i].onclick = function () {
+        rgb1P.innerHTML = this.value;
+        rgb1 = this.name;
+        rgb1_value(rgb1);
+      }
+    }
+    var push3 = document.getElementsByClassName("push3");
+    var rgb2P = document.getElementById("rgb2Pos");
+    rgb2P.innerHTML = push3[1].value; //顯示預設的值 Stop
+    rgb2 = push3[1].name;
+    for (var i = 0; i < push3.length; i++) {
+      push3[i].onclick = function () {
+        rgb2P.innerHTML = this.value;
+        rgb2 = this.name;
+        rgb2_value(rgb2);
+      }
+    }
+    var R = document.getElementById("R_");
+    var RP = document.getElementById("RPos");
+    RP.innerHTML = R.value; //顯示預設的值 會顯示中間值
+    R.oninput = function () {
+      R.value = this.value;
+      RP.innerHTML = this.value;
+      delayShowData("Rcolor",R.value);
+    }
+    
+    var G = document.getElementById("G_");
+    var GP = document.getElementById("GPos");
+    GP.innerHTML = G.value; //顯示預設的值 會顯示中間值
+    G.oninput = function () {
+      G.value = this.value;
+      GP.innerHTML = this.value;
+      delayShowData("Gcolor",G.value);
+    }
+
+    var B = document.getElementById("B_");
+    var BP = document.getElementById("BPos");
+    BP.innerHTML = B.value; //顯示預設的值 會顯示中間值
+    B.oninput = function () {
+      B.value = this.value;
+      BP.innerHTML = this.value;
+      delayShowData("Bcolor",B.value);
+    }
+
+    var timers = {};
+      function delayShowData(type, values) {
+        clearTimeout(timers[type]);
+        timers[type] = setTimeout(function () {
+          $('span.' + type).text(values[0] + 'mm - ' + values[1] + 'mm');
+          value(type, values);
+        }, 300);
+      }
+    $.ajaxSetup({ timeout: 1000 });
+    function value(type1,pos) {
+      $.get("/?"+type1+"=" + pos + "&");
+      { Connection: close };
+    }
+    function led_value(pos) {
+      $.get("/?Led=" + pos + "&");
+      { Connection: close };
+    }
+    function rgb1_value(pos) {
+      $.get("/?Rgb1=" + pos + "&");
+      { Connection: close };
+    }
+    function rgb2_value(pos) {
+      $.get("/?Rgb2=" + pos + "&");
+      { Connection: close };
+    }
+  </script>
+  </body>
+
+  </html>
