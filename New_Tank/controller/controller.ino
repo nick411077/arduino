@@ -1,8 +1,8 @@
 #include <PS2X_lib.h>
 
 
-byte Data[7] = {0xFF, 0x7B, 0, 0, 0, 0, 0};
-
+unsigned char Data[8] = {0xFF, 0x7B, 0, 0, 0, 0, 0, 0};
+uint16_t buttons;
 
 int error = 0; 
 byte type = 0;
@@ -55,18 +55,15 @@ void loop()
     num = 0;
     pwm = 0;
     ps2x.read_gamepad(false, 0);
-    Data[3] = ps2x.Analog(PSS_RX);
-    Data[4] = ps2x.Analog(PSS_RY);
-    Data[5] = ps2x.Analog(PSS_LX);
-    Data[6] = ps2x.Analog(PSS_LY);
-    if (ps2x.Button(PSB_PAD_UP)){Data[2]=0x02;}
-    if (ps2x.Button(PSB_PAD_DOWN)){pwm=0x04;}
-    if (ps2x.Button(PSB_PAD_RIGHT)){pwm=0x06;}
-    if (ps2x.Button(PSB_PAD_LEFT)){pwm=0x08;}
-    if (ps2x.Button(PSB_R1)){pwm=0x0A;}
-    if (ps2x.Button(PSB_L1)){pwm=0x0C;}
-    //serial();
-    (Data[4] << 8) + Data[3] = ps2x.ButtonDataByte();
+    Data[4] = ps2x.Analog(PSS_RX);
+    Data[5] = ps2x.Analog(PSS_RY);
+    Data[6] = ps2x.Analog(PSS_LX);
+    Data[7] = ps2x.Analog(PSS_LY);
+    buttons = ps2x.ButtonDataByte();
+    Data[3] = ~buttons >> 8;
+    Data[2] = ~buttons;//進位方式為PS2X_lib.h 可以參考
+    serial();
+    delay(100);
     
 }
 void serial() //PTZ上
