@@ -1,14 +1,13 @@
 #include <PS2X_lib.h>
 
 
-unsigned char Data[8] = {0xFF, 0x7B, 0, 0, 0, 0, 0, 0};
+
+unsigned char PS2XData[8] = {0x55, 0x2D, 0, 0, 0, 0, 0, 0};
+unsigned char Data[8];
 uint16_t buttons;
 
 int error = 0; 
 byte type = 0;
-byte GG;
-int num;
-int pwm;
 
 
 PS2X ps2x;
@@ -18,7 +17,7 @@ void setup()
     Serial.begin(115200); // initialize serial at baudrate 9600:
     Serial2.begin(115200);
     delay(500);
-    error = ps2x.config_gamepad(25, 26, 33, 27, true, true); //setup pins and settings:  GamePad(clock, command, attention, data, Pressures?, Rumble?) check for error
+    error = ps2x.config_gamepad(25, 26, 33, 27, true, true); //setup pins and settings:  GamePad(clock, command, attention, PS2XData, Pressures?, Rumble?) check for error
 
     if (error == 0)
     {
@@ -51,26 +50,35 @@ void setup()
 }
 void loop()
 {
-    Data[2]= 0x00;
-    num = 0;
-    pwm = 0;
     ps2x.read_gamepad(false, 0);
-    Data[4] = ps2x.Analog(PSS_RX);
-    Data[5] = ps2x.Analog(PSS_RY);
-    Data[6] = ps2x.Analog(PSS_LX);
-    Data[7] = ps2x.Analog(PSS_LY);
+    PS2XData[4] = ps2x.Analog(PSS_RX);
+    PS2XData[5] = ps2x.Analog(PSS_RY);
+    PS2XData[6] = ps2x.Analog(PSS_LX);
+    PS2XData[7] = ps2x.Analog(PSS_LY);
     buttons = ps2x.ButtonDataByte();
-    Data[3] = ~buttons >> 8;
-    Data[2] = ~buttons;//進位方式為PS2X_lib.h 可以參考
-    serial();
-    delay(100);
-    
+    PS2XData[3] = ~buttons >> 8;
+    PS2XData[2] = ~buttons;//進位方式為PS2X_lib.h 可以參考
+    write();
+    delay(10);
 }
-void serial() //PTZ上
+void read()
 {
-  for (byte z = 0; z < sizeof(Data); z++)
+    if (Serial2.available())
+    {
+        Serial2.readBytes(Data, 8);
+        for (byte z = 0; z < sizeof(Data); z++)
+        {
+            Serial.write(Data[z]);
+        }
+    }
+}
+void write() //PTZ上
+{
+  for (byte z = 0; z < sizeof(PS2XData); z++)
   {
-    Serial2.write(Data[z]);
-    Serial.write(Data[z]);
+    Serial2.write(PS2XData[z]);
   }
+}
+boolean Button(uint16_t button) {
+  return ((~buttons & button) > 0);
 }
