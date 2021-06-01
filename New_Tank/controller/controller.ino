@@ -56,10 +56,11 @@ void loop()
     PS2XData[6] = ps2x.Analog(PSS_LX);
     PS2XData[7] = ps2x.Analog(PSS_LY);
     buttons = ps2x.ButtonDataByte();
+    Serial.println(buttons);
     PS2XData[3] = ~buttons >> 8;
     PS2XData[2] = ~buttons;//進位方式為PS2X_lib.h 可以參考
     write();
-    delay(10);
+    delay(2);//傳送太快導致會掉資料
 }
 void read()
 {
@@ -69,6 +70,7 @@ void read()
         for (byte z = 0; z < sizeof(Data); z++)
         {
             Serial.write(Data[z]);
+            
         }
     }
 }
@@ -77,7 +79,9 @@ void write() //PTZ上
   for (byte z = 0; z < sizeof(PS2XData); z++)
   {
     Serial2.write(PS2XData[z]);
+    Serial.print(PS2XData[z],HEX);
   }
+  Serial.println();
 }
 boolean Button(uint16_t button) {
   return ((~buttons & button) > 0);
