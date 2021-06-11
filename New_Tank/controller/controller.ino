@@ -60,7 +60,7 @@ void loop()
     PS2XData[3] = ~buttons >> 8;
     PS2XData[2] = ~buttons;//進位方式為PS2X_lib.h 可以參考
     write();
-    delay(2);//傳送太快導致會掉資料
+    delay(5);//傳送太快導致會掉資料
 }
 void read()
 {

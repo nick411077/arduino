@@ -38,7 +38,7 @@ void PS2::DigitalWrite(uint8_t pinNumber, uint8_t status)
 
 void PS2::AnalogWrite(int pinNumber, int LEDChannel, int value)
 {
-    ledcSetup(LEDChannel, 5000, 8);
+    ledcSetup(LEDChannel, 15000, 8);
     ledcAttachPin(pinNumber, LEDChannel);
     ledcWrite(LEDChannel, value);
 }
@@ -53,7 +53,6 @@ void PS2::read()
         }
         Serial2.readBytes(Data, 8);
         int Check = Data[0] + Data[1];
-        Serial.println(Check);
         if (Check == 130)
         {
             for (byte z = 0; z < sizeof(Data); z++)
@@ -63,7 +62,6 @@ void PS2::read()
             Serial.println();
             last_buttons = buttons;
             buttons =  (uint16_t)(Data[3] << 8) + Data[2];
-            Serial.println(~buttons);
         }
         else
         {

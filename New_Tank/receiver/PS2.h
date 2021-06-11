@@ -24,10 +24,10 @@
 #define PSB_CROSS       0x4000
 #define PSB_SQUARE      0x8000
 
-#define PSS_RX 5
-#define PSS_RY 6
-#define PSS_LX 7
-#define PSS_LY 8
+#define PSS_RX 4
+#define PSS_RY 5
+#define PSS_LX 6
+#define PSS_LY 7
 
 class PS2
 {

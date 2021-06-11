@@ -21,17 +21,7 @@ void setup()
   Serial.begin(115200); // initialize serial at baudrate 9600:
   Serial2.begin(115200);
   WiFi.begin(ssid, pass);
-  Serial.println("Connecting");
-  while(WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("");
-  Serial.print("Connected to WiFi network with IP Address: ");
-  Serial.println(WiFi.localIP());
- 
-  Serial.println("Timer set to 5 seconds (timerDelay variable), it will take 5 seconds before publishing the first reading.");
-
+  while (Serial2.read() >= 0){}
 }
 
 void loop()
@@ -45,31 +35,28 @@ void loop()
 void Moto()
 {
     byte num = 0;
-    byte RRX;
-    byte LRX;
-    byte FRY;
-    byte BRY;
-    if (ps2.Analog(PSS_RY) < 100){num=num+1;FRY=map(ps2.Analog(PSS_RY), 100, 0, 0, 255);}
-    if (ps2.Analog(PSS_RX) > 150){num=num+2;RRX=map(ps2.Analog(PSS_RX), 150, 255, 0, 255);}
-    if (ps2.Analog(PSS_RX) < 100){num=num+4;LRX=map(ps2.Analog(PSS_RX), 100, 0, 0, 255);}
-    if (ps2.Analog(PSS_RY) > 150){num=num+8;BRY=map(ps2.Analog(PSS_RY), 150, 255, 0, 255);}
+    if (ps2.Analog(PSS_RY) < 100){num=num+1;}
+    if (ps2.Analog(PSS_RX) > 150){num=num+2;}
+    if (ps2.Analog(PSS_RX) < 100){num=num+4;}
+    if (ps2.Analog(PSS_RY) > 150){num=num+8;}
+    Serial.println(num);
     switch (num)
     {
     case 1:
         ps2.DigitalWrite(18, HIGH);
         ps2.DigitalWrite(5, LOW);
-        ps2.AnalogWrite(25, 1, FRY);
+        ps2.AnalogWrite(25, 1, 255);
         ps2.DigitalWrite(32, HIGH);
         ps2.DigitalWrite(33, LOW);
-        ps2.AnalogWrite(26, 2, FRY);
+        ps2.AnalogWrite(26, 2, 255);
         break;
     case 2:
-        ps2.DigitalWrite(18, HIGH);
-        ps2.DigitalWrite(5, LOW);
-        ps2.AnalogWrite(25, 1, RRX);
-        ps2.DigitalWrite(32, LOW);
-        ps2.DigitalWrite(33, HIGH);
-        ps2.AnalogWrite(26, 2, RRX);
+        ps2.DigitalWrite(18, LOW);
+        ps2.DigitalWrite(5, HIGH);
+        ps2.AnalogWrite(25, 1, 255);
+        ps2.DigitalWrite(32, HIGH);
+        ps2.DigitalWrite(33, LOW);
+        ps2.AnalogWrite(26, 2, 255);
         break;
     case 3:
         ps2.DigitalWrite(18, HIGH);
@@ -80,12 +67,12 @@ void Moto()
         ps2.AnalogWrite(26, 2, 155);
         break;
     case 4:
-        ps2.DigitalWrite(18, LOW);
-        ps2.DigitalWrite(5, HIGH);
-        ps2.AnalogWrite(25, 1, LRX);
-        ps2.DigitalWrite(32, HIGH);
-        ps2.DigitalWrite(33, LOW);
-        ps2.AnalogWrite(26, 2, LRX);
+        ps2.DigitalWrite(18, HIGH);
+        ps2.DigitalWrite(5, LOW);
+        ps2.AnalogWrite(25, 1, 255);
+        ps2.DigitalWrite(32, LOW);
+        ps2.DigitalWrite(33, HIGH);
+        ps2.AnalogWrite(26, 2, 255);
         break;
     case 5:
         ps2.DigitalWrite(18, HIGH);
@@ -98,10 +85,10 @@ void Moto()
     case 8:
         ps2.DigitalWrite(18, LOW);
         ps2.DigitalWrite(5, HIGH);
-        ps2.AnalogWrite(25, 1, BRY);
+        ps2.AnalogWrite(25, 1, 255);
         ps2.DigitalWrite(32, LOW);
         ps2.DigitalWrite(33, HIGH);
-        ps2.AnalogWrite(26, 2, BRY);
+        ps2.AnalogWrite(26, 2, 255);
         break;
     case 10:
         ps2.DigitalWrite(18, LOW);
