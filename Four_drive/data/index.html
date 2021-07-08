@@ -23,83 +23,27 @@
   <h1>ESP32 with Servo</h1>
   <h1>Car Yuntai</h1>
   <div class="carSlider">
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push1" id="carSlider1" value="\"
+    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push1" id="carSlider1" value="^"
       name="1" />
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push1" id="carSlider2" value="^"
-      name="2" />
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push1" id="carSlider3" value="/"
-      name="3" />
-    <br>
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push1" id="carSlider4" value="<"
-      name="4" />
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push1" id="carSlider5" value="Stop"
-      name="5" />
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push1" id="carSlider6" value=">"
-      name="6" />
-    <br>
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push1" id="carSlider7" value="/"
-      name="7" />
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push1" id="carSlider8" value="v"
-      name="8" />
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push1" id="carSlider9" value="\"
-      name="9" />
-  </div>
-  <div class="YuntaiSlider">
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push3" id="YuntaiSlider1" value="^"
-      name="1" />
-    <br>
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push3" id="YuntaiSlider2" value="<"
-      name="2" />
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push3" id="YuntaiSlider3" value="Stop"
-      name="3" />
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push3" id="YuntaiSlider4" value=">"
-      name="4" />
-    <br>
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push3" id="YuntaiSlider5" value="v"
-      name="5" />
-  </div>
   <br>
-  <input type="button" style="width:100px;height:100px;font-size:40px;" class="push2" id="motoSlider1" value="下"
-    name="1" />
-  <input type="button" style="width:100px;height:100px;font-size:40px;" class="push2" id="motoSlider2" value="一"
-    name="2" />
-  <input type="button" style="width:100px;height:100px;font-size:40px;" class="push2" id="motoSlider3" value="上"
-    name="3" />
-  <p>Position: <span id="servoPos"></span> carvalue: <span id="carPos"></span> motovalue: <span id="motoPos"></span>
-    Yuntaivalue: <span id="YuntaiPos"></span></p>
-  <input type="range" min="0" max="180" class="slider" id="servoSlider" value="0" />
+    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push1" id="carSlider2" value="-"
+      name="2" />
+  <br>
+    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push1" id="carSlider3" value="v"
+      name="3" />
+    <br>
+  <p>Position: <span id="servoPos"></span> carvalue: <span id="carPos"></span></p>
+  <input type="range" min="0" max="180" class="slider" id="servoSlider" value="90" />
   <script>
     var push1 = document.getElementsByClassName("push1");
     var carP = document.getElementById("carPos");
-    carP.innerHTML = push1[4].value; //顯示預設的值 Stop
-    car = push1[4].name;
+    carP.innerHTML = push1[1].value; //顯示預設的值 Stop
+    car = push1[1].name;
     for (var i = 0; i < push1.length; i++) {
       push1[i].onclick = function () {
         carP.innerHTML = this.value;
         car = this.name;
         car_value(car);
-      }
-    }
-    var push2 = document.getElementsByClassName("push2");
-    var motoP = document.getElementById("motoPos");
-    motoP.innerHTML = push2[1].value; //顯示預設的值 一
-    moto = push2[1].value;
-    for (var i = 0; i < push2.length; i++) {
-      push2[i].onclick = function () {
-        motoP.innerHTML = this.value;
-        moto = this.name;
-        moto_value(moto);
-      }
-    }
-    var push3 = document.getElementsByClassName("push3");
-    var YuntaiP = document.getElementById("YuntaiPos");
-    YuntaiP.innerHTML = push3[2].value; //顯示預設的值 Stop
-    Yuntai = push3[2].name;
-    for (var i = 0; i < push3.length; i++) {
-      push3[i].onclick = function () {
-        YuntaiP.innerHTML = this.value;
-        Yuntai = this.name;
-        Yuntai_value(Yuntai);
       }
     }
     var slider = document.getElementById("servoSlider");
@@ -125,14 +69,6 @@
     }
     function car_value(pos) {
       $.get("/?car=" + pos + "&");
-      { Connection: close };
-    }
-    function moto_value(pos) {
-      $.get("/?moto=" + pos + "&");
-      { Connection: close };
-    }
-    function Yuntai_value(pos) {
-      $.get("/?Yuntai=" + pos + "&");
       { Connection: close };
     }
   </script>

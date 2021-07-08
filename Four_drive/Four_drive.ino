@@ -1,4 +1,3 @@
-
 #include <ESP8266WiFi.h>
 #include <ESPAsyncTCP.h>
 #include <FS.h>
@@ -10,16 +9,12 @@
 //步進設置
 int pulse = 14, dir = 12, enable = 2; //Arduino給驅動器的腳位
 AccelStepper stepper(1,pulse,dir);
-int ReMaxSpeed = 20000;
-int ReAcceleration = 2000;
-int MaxSpeed = 20000;
-int Acceleration = 5000;
-int Max = -200000;
+int MaxSpeed = 2000; //空載2000
+int Acceleration = 200; //空載200
+int Max = 1300; //1:80= 16000轉
 //PWM設置
-Servo RCmoto;
 Servo RC1;
 Servo RC2;
-const int RCPinmoto = 27;
 const int RCPin1 = 5;
 const int RCPin2 = 4;
 
@@ -33,7 +28,7 @@ AsyncWebServer server(80);
 
 
 // Decode HTTP GET 設置
-String valueString = String(0);
+String valueString = String(90);
 String CarValue = String(5);
 int value;
 
@@ -43,7 +38,7 @@ void setup() {
      Serial.println("An Error has occurred while mounting SPIFFS");
      return;
   }
-  Serial.begin(9600);
+  Serial.begin(115200);
   RC1.attach(RCPin1,1000,2000);  
   RC2.attach(RCPin2,1000,2000);
   RC1.write(90);
@@ -56,9 +51,9 @@ void setup() {
   digitalWrite(enable,LOW);
   stepper.setEnablePin(enable);
   stepper.disableOutputs();
-  stepper.setMaxSpeed(ReMaxSpeed);
-  stepper.setAcceleration(ReAcceleration);
-  stepper.setCurrentPosition(0);
+  stepper.setMaxSpeed(MaxSpeed);
+  stepper.setAcceleration(Acceleration);
+  stepper.setCurrentPosition(650);
   // Connect to Wi-Fi network with SSID and password
   Serial.print("Connecting to ");
   Serial.println(ssid);
@@ -89,38 +84,15 @@ void setup() {
     switch (CarValue.toInt()){ //控制
     case 1: // 左前
       RC1.write(120);
-      RC2.write(135);
-      break;
-    case 2: // 前
-      RC1.write(135);
-      RC2.write(135);
-      break;
-    case 3: // 右前
-      RC1.write(135);
       RC2.write(120);
       break;
-    case 4: // 左
-      RC1.write(45);
-      RC2.write(135);
-      break;
-    case 5: // 停
+    case 2: // 前
       RC1.write(90);
       RC2.write(90);
       break;
-    case 6: // 右
-      RC1.write(135);
-      RC2.write(45);
-      break;
-    case 7: // 左後
-      RC1.write(45);
-      RC2.write(30);
-      break;
-    case 8: // 後
-      RC1.write(45);
-      RC2.write(45);
-    case 9: // 右後
-      RC1.write(30);
-      RC2.write(45);
+    case 3: // 右前
+      RC1.write(70);
+      RC2.write(70);
       break;
     }
     request->send(SPIFFS, "/index.html", "text/html");
