@@ -5,6 +5,7 @@
 #include <ESPAsyncWebServer.h>
 #include <AccelStepper.h>
 #include <Stepper.h>
+#include <Ultrasonic.h>
 // D7 (GPIO 13) 當 trigPin, D8 (GPIO 15) 當 echoPin 的話, 就要呼叫 ping(13, 15).
 //步進設置
 int pulse = 14, dir = 12, enable = 2; //Arduino給驅動器的腳位
@@ -18,6 +19,9 @@ Servo RC2;
 const int RCPin1 = 5;
 const int RCPin2 = 4;
 
+//超音波設置
+Ultrasonic ultrasonic(15, 13);
+int distance;
 
 //WiFi設置
 const char* ssid     = "Lavender";
@@ -112,4 +116,7 @@ void setup() {
 void loop()
 {
   stepper.run();
+  distance = ultrasonic.read();
+  Serial.print("Distance in CM: ");
+  Serial.println(distance);
 }

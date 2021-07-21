@@ -14,24 +14,24 @@ PS2X ps2x;
 
 void setup()
 {
-    Serial.begin(115200); // initialize serial at baudrate 9600:
+    Serial.begin(115200); // initialize serial at baudrate 115200:
     Serial2.begin(115200);
     delay(500);
-    error = ps2x.config_gamepad(25, 26, 33, 27, true, true); //setup pins and settings:  GamePad(clock, command, attention, PS2XData, Pressures?, Rumble?) check for error
+    error = ps2x.config_gamepad(25, 26, 33, 27, true, true); //設置引腳和設置:  GamePad(clock, command, attention, PS2XData, Pressures?, Rumble?) check for error
 
     if (error == 0)
     {
-        Serial.println("Found Controller, configured successful");
+        Serial.println("找到控制器，配對成功");
     }
 
     else if (error == 1)
-        Serial.println("No controller found, check wiring, see readme.txt to enable debug. visit www.billporter.info for troubleshooting tips");
+        Serial.println("未找到控制器，檢查接線，查看 readme.txt 以啟用調試。 訪問 www.billporter.info 獲取故障排除提示");
 
     else if (error == 2)
-        Serial.println("Controller found but not accepting commands. see readme.txt to enable debug. Visit www.billporter.info for troubleshooting tips");
+        Serial.println("找到控制器但不接受命令。 請參閱 readme.txt 以啟用調試。 訪問 www.billporter.info 獲取故障排除提示");
 
     else if (error == 3)
-        Serial.println("Controller refusing to enter Pressures mode, may not support it. ");
+        Serial.println("控制器拒絕進入壓力模式，可能不支持。");
 
     type = ps2x.readType();
     switch (type)
