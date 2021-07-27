@@ -2,7 +2,8 @@
 <html>
 
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1" charset="utf-8">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="data:,">
   <style>
     body {
@@ -15,32 +16,40 @@
     .slider {
       width: 300px;
     }
+    .direction{
+      width: 100px;
+      height: 100px;
+      font-size: 40px;
+    }
+    .set{
+      width: 100px;
+      height: 30px;
+      font-size: 20px;
+    }
   </style>
   <script src="jquery-3.3.1.min.js"></script>
 </head>
 
 <body>
   <h1>ESP32 with Servo</h1>
-  <h1>Car Yuntai</h1>
+  <h1>Car</h1>
   <div class="carSlider">
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push1" id="carSlider1" value="^"
-      name="1" />
+    <input type="button" class="direction" value="^" name="1" />
   <br>
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push1" id="carSlider2" value="-"
-      name="2" />
+    <input type="button" class="direction" value="-" name="2" />
   <br>
-    <input type="button" style="width:100px;height:100px;font-size:40px;" class="push1" id="carSlider3" value="v"
-      name="3" />
-    <br>
-  <p>Position: <span id="servoPos"></span> carvalue: <span id="carPos"></span></p>
+    <input type="button" class="direction" value="v" name="3" />
+  <br>
+    <input type="number" class="set" id="setvalue" min="0" max="90" value="45" />
+  <p>Position: <span id="servoPos"></span> Car: <span id="carPos"></span> Set: <span id="setPos"></span></p>
   <input type="range" min="0" max="180" class="slider" id="servoSlider" value="90" />
   <script>
-    var push1 = document.getElementsByClassName("push1");
+    var direction = document.getElementsByClassName("direction");
     var carP = document.getElementById("carPos");
-    carP.innerHTML = push1[1].value; //顯示預設的值 Stop
-    car = push1[1].name;
-    for (var i = 0; i < push1.length; i++) {
-      push1[i].onclick = function () {
+    carP.innerHTML = direction[1].value; //顯示預設的值 Stop
+    car = direction[1].name;
+    for (var i = 0; i < direction.length; i++) {
+      direction[i].onclick = function () {
         carP.innerHTML = this.value;
         car = this.name;
         car_value(car);
@@ -52,19 +61,27 @@
     slider.oninput = function () {
       slider.value = this.value;
       servoP.innerHTML = this.value;
-      delayShowData("slider",slider.value);
+      delayShowData("value",slider.value);
+    }
+    var Value = document.getElementById("setvalue");
+    var setP = document.getElementById("setPos");
+    setP.innerHTML = Value.value; //顯示預設的值 會顯示中間值
+    Value.oninput = function () {
+      Value.value = this.value;
+      setP.innerHTML = this.value;
+      delayShowData("set",Value.value);
     }
     var timers = {};
       function delayShowData(type, values) {
         clearTimeout(timers[type]);
         timers[type] = setTimeout(function () {
           $('span.' + type).text(values[0] + 'mm - ' + values[1] + 'mm');
-          slider_value(type, values);
+          value(type, values);
         }, 300);
       }
     $.ajaxSetup({ timeout: 1000 });
-    function slider_value(type,pos) {
-      $.get("/?value=" + pos + "&");
+    function value(type,pos) {
+      $.get("/?"+ type +"=" + pos + "&");
       { Connection: close };
     }
     function car_value(pos) {
