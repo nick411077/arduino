@@ -43,7 +43,13 @@
  * or only the signal pin (for sensors 3 pins), like:
  * Ultrasonic ultrasonic(13);
  */
+
+#ifdef ESP32
+Ultrasonic ultrasonic(26, 27);
+#elif defined(ESP8266)
 Ultrasonic ultrasonic(15, 13);
+#endif
+
 int distance;
 
 void setup() {

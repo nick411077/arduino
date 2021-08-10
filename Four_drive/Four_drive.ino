@@ -3,16 +3,17 @@
 #include <FS.h>                //檔案系統函數庫  
 #include <Servo.h>             //伺服馬達函數庫
 #include <ESPAsyncWebServer.h> //異步處理網頁伺服器函數庫 download https://github.com/me-no-dev/ESPAsyncWebServer
-//#include <AccelStepper.h>      //步進馬達函數庫
-//#include <Stepper.h>           //步進馬達函數庫
-//#include <Ultrasonic.h>        //超音波函數庫
-// D7 (GPIO 13) 當 trigPin, D8 (GPIO 15) 當 echoPin 的話, 就要呼叫 ping(13, 15).
+#include <AccelStepper.h>      //步進馬達函數庫
+#include <Stepper.h>           //步進馬達函數庫
+
 //步進設置
-//int pulse = 14, dir = 12, enable = 2; //Arduino給驅動器的腳位
-//AccelStepper stepper(1, pulse, dir);
-//int MaxSpeed = 2000;    //最高速 空載2000
-//int Acceleration = 200; //加速度 空載200
-//int Max = 1300;         //1:80= 16000轉
+#define ENB 2
+#define DIR 12
+#define PUL 14 //Arduino給驅動器的腳位
+AccelStepper stepper(1, PUL, DIR);
+int MaxSpeed = 2000;    //最高速 空載2000
+int Acceleration = 200; //加速度 空載200
+int Max = 1300;         //1:80= 16000轉
 //PWM設置
 Servo RC1;
 Servo RC2;
@@ -20,8 +21,8 @@ const int RCPin1 = 5;
 const int RCPin2 = 4;
 
 //超音波設置
-//Ultrasonic ultrasonic(15, 13);
-int distance;
+#define TRIG 15
+#define ECHO 13
 
 //WiFi設置
 const char *ssid = "Lavender";
@@ -31,11 +32,11 @@ const char *password = "12345678";
 AsyncWebServer server(80);
 
 // Decode HTTP GET 設置
-//String Slider = String(90); //網站請求的拉條變數
+String Slider = String(90); //網站請求的拉條變數
 String Car = String(2); //網站請求的方向變數
 String Set = String(45); //網站請求的出力變數
 //將 String轉換成int
-//int SliderValue; 
+int SliderValue; 
 int CarValue;
 int SetValue;
 
@@ -54,17 +55,16 @@ void setup()
   RC2.attach(RCPin2, 1000, 2000);
   RC1.write(90);
   RC2.write(90);
-  pinMode(4, OUTPUT);
-  //pinMode(pulse, OUTPUT);
-  //pinMode(dir, OUTPUT);
-  //pinMode(enable, OUTPUT);
-  //digitalWrite(dir, HIGH);
-  //digitalWrite(enable, LOW);
-  //stepper.setEnablePin(enable);
-  //stepper.disableOutputs();
-  //stepper.setMaxSpeed(MaxSpeed);         //最高速設置
-  //stepper.setAcceleration(Acceleration); //加速度設置
-  //stepper.setCurrentPosition(650);       //步進馬達置中設置
+  pinMode(PUL, OUTPUT);
+  pinMode(DIR, OUTPUT);
+  pinMode(ENB, OUTPUT);
+  digitalWrite(DIR, HIGH);
+  digitalWrite(ENB, LOW);
+  stepper.setEnablePin(ENB);
+  stepper.disableOutputs();
+  stepper.setMaxSpeed(MaxSpeed);         //最高速設置
+  stepper.setAcceleration(Acceleration); //加速度設置
+  stepper.setCurrentPosition(650);       //步進馬達置中設置
   // Connect to Wi-Fi network with SSID and password
   Serial.print("Connecting to ");
   Serial.println(ssid);             //顯示SSID
@@ -83,7 +83,7 @@ void setup()
       Serial.println("------");
       if (request->argName(i) == "value")//GET網站拉條狀態
       {
-        //Slider = request->arg(i);
+        Slider = request->arg(i);
       }
       else if (request->argName(i) == "car")//GET網站方向狀態
       {
@@ -95,9 +95,9 @@ void setup()
         Set = request->arg(i);
       }
     }
-    //SliderValue = map(Slider.toInt(), 0, 180, 0, Max);//換算數值
-    //stepper.moveTo(SliderValue);//指定步進馬達位址
-    //Serial.println(stepper.currentPosition());
+    SliderValue = map(Slider.toInt(), 0, 180, 0, Max);//換算數值
+    stepper.moveTo(SliderValue);//指定步進馬達位址
+    Serial.println(stepper.currentPosition());
     SetValue = Set.toInt();//將 String轉換成int
     CarValue = Car.toInt();//將 String轉換成int
     /*switch (CarValue.toInt()){ //控制
@@ -128,14 +128,13 @@ void setup()
 
 void loop()
 {
-  //stepper.run();
+  stepper.run();
   if (status == 0)//讀取狀態
   {
     moto();
   }
-  //distance = ultrasonic.read(); //超音波
-  /*Serial.print("Distance in CM: ");
-  Serial.println(distance);*/
+  Serial.print("Distance in CM: ");
+  Serial.println(Ultrasound(TRIG,ECHO));
 }
 
 void moto()
@@ -206,4 +205,19 @@ void moto()
     val++;//累加
   }
   status = 1;//更新狀態
+}
+
+int Ultrasound(int trigPin, int echoPin)
+{
+  long duration;
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(1);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  duration = pulseIn(echoPin, HIGH);
+  duration = duration / 28 / 2;
+  return duration;
 }
