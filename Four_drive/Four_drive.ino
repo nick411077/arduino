@@ -1,6 +1,6 @@
-#include <ESP8266WiFi.h>
-#include <ESPAsyncTCP.h>       //異步處理函數庫 download https://github.com/me-no-dev/ESPAsyncTCP
-#include <FS.h>                //檔案系統函數庫  
+#include <WiFi.h>
+#include <AsyncTCP.h>       //異步處理函數庫 download https://github.com/me-no-dev/ESPAsyncTCP
+#include <SPIFFS.h>                //檔案系統函數庫  
 #include <Servo.h>             //伺服馬達函數庫
 #include <ESPAsyncWebServer.h> //異步處理網頁伺服器函數庫 download https://github.com/me-no-dev/ESPAsyncWebServer
 #include <AccelStepper.h>      //步進馬達函數庫
@@ -12,17 +12,28 @@
 #define PUL 14 //Arduino給驅動器的腳位
 AccelStepper stepper(1, PUL, DIR);
 int MaxSpeed = 2000;    //最高速 空載2000
-int Acceleration = 200; //加速度 空載200
-int Max = 1300;         //1:80= 16000轉
+//int Acceleration = 200; //加速度 空載200
+//int Max = 1300;         //1:80= 16000轉
 //PWM設置
-Servo RC1;
-Servo RC2;
-const int RCPin1 = 5;
-const int RCPin2 = 4;
+#define RCFPin 5
+#define RCBPin 4
+#define RCLPin 7
+#define RCRPin 8
+Servo RCF;
+Servo RCB;
+Servo RCL;
+Servo RCR;
+
+//雙核運行
+TaskHandle_t Task1;
 
 //超音波設置
 #define TRIG 15
 #define ECHO 13
+
+//碰撞感應器
+#define SL 27
+#define SR 26
 
 //WiFi設置
 const char *ssid = "Lavender";
@@ -32,13 +43,15 @@ const char *password = "12345678";
 AsyncWebServer server(80);
 
 // Decode HTTP GET 設置
-String Slider = String(90); //網站請求的拉條變數
+String Ste = String(5); //網站請求的方向變數
 String Car = String(2); //網站請求的方向變數
-String Set = String(45); //網站請求的出力變數
-//將 String轉換成int
-int SliderValue; 
+String Pow = String(45); //網站請求的出力變數
+String Stop = String(0);
+//將 String轉換成int 
+int StepValue;
 int CarValue;
-int SetValue;
+int PowValue;
+int StopValue;
 
 int val = 0; //加速度變數
 uint8_t status = 1; //為了loop不要重複運行設定狀態變數只運行一次
@@ -51,10 +64,12 @@ void setup()
     return;
   }
   Serial.begin(115200); //設定鮑率
-  RC1.attach(RCPin1, 1000, 2000);
-  RC2.attach(RCPin2, 1000, 2000);
-  RC1.write(90);
-  RC2.write(90);
+  RCF.attach(RCFPin, 1000, 2000);
+  RCB.attach(RCBPin, 1000, 2000);
+  RCF.write(90);
+  RCB.write(90);
+  RCL.attach(RCLPin);
+  RCR.attach(RCRPin);
   pinMode(PUL, OUTPUT);
   pinMode(DIR, OUTPUT);
   pinMode(ENB, OUTPUT);
@@ -62,9 +77,6 @@ void setup()
   digitalWrite(ENB, LOW);
   stepper.setEnablePin(ENB);
   stepper.disableOutputs();
-  stepper.setMaxSpeed(MaxSpeed);         //最高速設置
-  stepper.setAcceleration(Acceleration); //加速度設置
-  stepper.setCurrentPosition(650);       //步進馬達置中設置
   // Connect to Wi-Fi network with SSID and password
   Serial.print("Connecting to ");
   Serial.println(ssid);             //顯示SSID
@@ -81,37 +93,30 @@ void setup()
       Serial.print("Param value: ");
       Serial.println(request->arg(i));
       Serial.println("------");
-      if (request->argName(i) == "value")//GET網站拉條狀態
+      if (request->argName(i) == "step")//GET網站方向狀態
       {
-        Slider = request->arg(i);
+        Ste = request->arg(i);
+        StepValue = Ste.toInt();//將 String轉換成int
+        Step(StepValue);
       }
       else if (request->argName(i) == "car")//GET網站方向狀態
       {
         Car = request->arg(i);
+        CarValue = Car.toInt();//將 String轉換成int
+        StopValue = 0;
         status = 0;//更新狀態
       }
-      else if (request->argName(i) == "set")//GET網站出力狀態
+      else if (request->argName(i) == "pow")//GET網站出力狀態
       {
-        Set = request->arg(i);
+        Pow = request->arg(i);
+        PowValue = Pow.toInt();//將 String轉換成int
+      }
+      else if (request->argName(i) == "stop")//GET網站手煞車狀態
+      {
+        Stop = request->arg(i);
+        StopValue = Stop.toInt();//將 String轉換成int
       }
     }
-    SliderValue = map(Slider.toInt(), 0, 180, 0, Max);//換算數值
-    stepper.moveTo(SliderValue);//指定步進馬達位址
-    Serial.println(stepper.currentPosition());
-    SetValue = Set.toInt();//將 String轉換成int
-    CarValue = Car.toInt();//將 String轉換成int
-    /*switch (CarValue.toInt()){ //控制
-    case 1: // 左
-      run(1,set);
-      break;
-    case 2: // 停
-      RC1.write(90);
-      RC2.write(90);
-      break;
-    case 3: // 後
-      run(2,set); //
-      break;
-    }*/
     request->send(SPIFFS, "/index.html", "text/html");
   });
   //server.onRequestBody([](AsyncWebServerRequest *request));
@@ -128,32 +133,40 @@ void setup()
 
 void loop()
 {
-  stepper.run();
-  if (status == 0)//讀取狀態
+  stepper.runSpeed();//持續旋轉
+  if (digitalRead(SL) == 1 || digitalRead(SR) == 1)//如果左或右碰到微動開關離即停止
+  {
+    Step(2);
+  }
+  else if (status == 0)//讀取狀態
   {
     moto();
   }
-  Serial.print("Distance in CM: ");
-  Serial.println(Ultrasound(TRIG,ECHO));
+  else if (StopValue == 1 || Ultrasound(TRIG,ECHO) <= 40)//如果接收P檔或超音波小於40cm就停止
+  {
+    STOP();
+  }
 }
 
-void moto()
+void moto()//馬達控制 目前還要修正操作順暢度 可能會使用ESP32的第二核心運行減少延遲
 {
-  int set = SetValue;//加速度值
-  int RC = RC1.read();//初始讀取馬達狀態
-  int RCS = RC1.read();//停止中時持續讀取馬達狀態
+  RCR.write(180);//釋放煞車
+  RCL.write(180);
+  int pow = PowValue;//加速度值
+  int RC = RCF.read();//初始讀取馬達狀態
+  int RCS = RCF.read();//停止中時持續讀取馬達狀態
   int time = 10;//delay時間
   while (CarValue == 1)//前
   {
     if (RC == 90)//如果停就加速度前進
     {
-      RC1.write(90 + val);//加速度
-      RC2.write(90 + val);//加速度
+      RCF.write(90 + val);//加速度
+      RCB.write(90 + val);//加速度
       Serial.print("SetValue:");
-      Serial.println(RC1.read());
+      Serial.println(RCF.read());
       delay(time);
     }
-    if (val == set || RC == (90 + set))//如果速度達到要求就跳出
+    if (val == pow || RC == (90 + pow))//如果速度達到要求就跳出
     {
       Serial.println("close1");
       break;
@@ -164,21 +177,21 @@ void moto()
   {
     if (RC > 90)//如果是前進就減速度停止
     {
-      RC1.write(90 + val);//減速度
-      RC2.write(90 + val);//減速度
+      RCF.write(90 + val);//減速度
+      RCB.write(90 + val);//減速度
       Serial.print("SetValue:");
-      Serial.println(RC1.read());
+      Serial.println(RCF.read());
       delay(time);
     }
     else if (RC < 90)//如果是後退就減速度停止
     {
-      RC1.write(90 - val);//減速度
-      RC2.write(90 - val);//減速度
+      RCF.write(90 - val);//減速度
+      RCB.write(90 - val);//減速度
       Serial.print("SetValue:");
-      Serial.println(RC1.read());
+      Serial.println(RCF.read());
       delay(time);
     }
-    RCS = RC1.read();
+    RCS = RCF.read();
     if (val == 0 || RCS == 90)//如果停止達到要求就跳出
     {
       val = 0;//重置累加
@@ -191,13 +204,13 @@ void moto()
   {
     if (RC == 90)//如果停就加速度後退
     {
-      RC1.write(90 - val);//加速度
-      RC2.write(90 - val);//加速度
+      RCF.write(90 - val);//加速度
+      RCB.write(90 - val);//加速度
       Serial.print("SetValue:");
-      Serial.println(RC1.read());
+      Serial.println(RCF.read());
       delay(time);
     }
-    if (val == set || RC == (90 - set))//如果速度達到要求就跳出
+    if (val == pow || RC == (90 - pow))//如果速度達到要求就跳出
     {
       Serial.println("close3");
       break;
@@ -205,6 +218,29 @@ void moto()
     val++;//累加
   }
   status = 1;//更新狀態
+}
+
+void Step(int Step)
+{
+  switch (Step)
+  {
+  case 1://左轉
+    stepper.setSpeed(2000);//設定速度
+    break;
+  case 2://停
+    stepper.setSpeed(0);
+    break;
+  case 3://右轉
+    stepper.setSpeed(-2000);
+    break;
+  }
+}
+
+void STOP()//P檔煞車動作
+{
+  moto();//減速停止
+  RCR.write(0);//加上煞車
+  RCL.write(0);
 }
 
 int Ultrasound(int trigPin, int echoPin)
