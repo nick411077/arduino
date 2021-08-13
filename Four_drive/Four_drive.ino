@@ -151,7 +151,7 @@ void loop()
 void moto()//馬達控制 目前還要修正操作順暢度 可能會使用ESP32的第二核心運行減少延遲
 {
   RCR.write(180);//釋放煞車
-  RCL.write(180);
+  RCL.write(180);//釋放煞車
   int pow = PowValue;//加速度值
   int RC = RCF.read();//初始讀取馬達狀態
   int RCS = RCF.read();//停止中時持續讀取馬達狀態
@@ -222,7 +222,7 @@ void moto()//馬達控制 目前還要修正操作順暢度 可能會使用ESP32
 
 void Step(int Step)
 {
-  switch (Step)
+  switch (Step)//這個方式在灌漿車上有做過了速度都可以在調整
   {
   case 1://左轉
     stepper.setSpeed(2000);//設定速度
