@@ -48,6 +48,8 @@
 Ultrasonic ultrasonic(26, 27);
 #elif defined(ESP8266)
 Ultrasonic ultrasonic(15, 13);
+#else
+Ultrasonic ultrasonic(6, 5);
 #endif
 
 int distance;
