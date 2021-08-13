@@ -20,7 +20,7 @@
 ### 上傳測試
 
 點擊ESP32/ESP8266 Sketch Data Upload
-![img](./img/upload.png)
+![img](./img/upload.png)  
 確認是否你要的檔案
 
 ![done](./img/done.png)  
