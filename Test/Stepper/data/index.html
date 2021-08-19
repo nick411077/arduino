@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charpow="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <style>
+    body {
+      text-align: center;
+      font-family: "Trebuchet MS", Arial;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .slider {
+      width: 300px;
+    }
+    .direction{
+      width: 100px;
+      height: 100px;
+      font-size: 40px;
+    }
+    .stepvalue{
+      width: 100px;
+      height: 100px;
+      font-size: 40px;
+    }
+    .stepValue{
+      height: 125px;
+    }
+    .pow{
+      width: 100px;
+      height: 34px;
+      font-size: 24px;
+    }
+    .P{
+      width: 100px;
+      height: 100px;
+      font-size: 40px;
+      border-radius: 100px;
+      background-color: #e03434;
+      color: white;
+    }
+    .Space{
+      height: 100px;
+      width: 300px;
+      margin:auto;
+      position: relative;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      align-content: center;
+    }
+    .Value{
+      font-size: 25px;
+    }
+  </style>
+  <script src="jquery-3.3.1.min.js"></script>
+</head>
+
+<body>
+  <h1>ESP32 Stepper</h1>
+  <div class="stepValue">
+    <input type="button" class="stepvalue" value="<" name="1" />
+    <input type="button" class="stepvalue" value="-" name="2" />
+    <input type="button" class="stepvalue" value=">" name="3" />
+    <br>
+  <div class="Value">
+  <p>Step: <span id="stepPos"></span></p>
+  </div>
+  <script>
+    var stepvalue = document.getElementsByClassName("stepvalue");
+    var stepP = document.getElementById("stepPos");
+    stepP.innerHTML = stepvalue[1].value; //顯示預設的值 Stop
+    step = stepvalue[1].name;
+    for (var i = 0; i < stepvalue.length; i++) {
+      stepvalue[i].onclick = function () {
+        stepP.innerHTML = this.value;
+        step = this.name;
+        value("step",step);
+      }
+    }
+    var timers = {};
+      function delayShowData(type, values) {
+        clearTimeout(timers[type]);
+        timers[type] = setTimeout(function () {
+          $('span.' + type).text(values[0] + 'mm - ' + values[1] + 'mm');
+          value(type, values);
+        }, 300);
+      }
+    $.ajaxSetup({ timeout: 1000 });
+    function value(type,pos) {
+      $.get("/?"+ type +"=" + pos + "&");
+      { Connection: close };
+    }
+  </script>
+  </body>
+
+  </html>
