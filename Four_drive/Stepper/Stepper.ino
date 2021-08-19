@@ -9,9 +9,9 @@
 #define ENB 5
 #define DIR 18
 #define PUL 19 //Arduino給驅動器的腳位
-AccelStepper stepper(1, PUL, DIR);
+AccelStepper stepper(1, 19, 18);
 int MaxSpeed = 2000;    //最高速 空載2000
-//int Acceleration = 200; //加速度 空載200
+int Acceleration = 200; //加速度 空載200
 //int Max = 1300;         //1:80= 16000轉
 
 //碰撞感應器
@@ -48,6 +48,9 @@ void setup()
   digitalWrite(ENB, LOW);
   stepper.setEnablePin(ENB);
   stepper.disableOutputs();
+  stepper.setMaxSpeed(MaxSpeed);
+  stepper.setAcceleration(Acceleration);
+  stepper.setCurrentPosition(0);
   // Connect to Wi-Fi network with SSID and password
   Serial.print("Connecting to ");
   Serial.println(ssid);             //顯示SSID
@@ -99,13 +102,16 @@ void Step(int Step)
   switch (Step)//這個方式在灌漿車上有做過了速度都可以在調整
   {
   case 1://左轉
-    stepper.setSpeed(2000);//設定速度
+    stepper.setSpeed(200);//設定速度
+    Serial.println("1");
     break;
   case 2://停
     stepper.setSpeed(0);
+    Serial.println("2");
     break;
   case 3://右轉
-    stepper.setSpeed(-2000);
+    stepper.setSpeed(-200);
+    Serial.println("3");
     break;
   }
 }
