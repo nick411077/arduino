@@ -12,7 +12,7 @@
 #define PUL 19 //Arduino給驅動器的腳位
 AccelStepper stepper(1, PUL, DIR);
 int MaxSpeed = 2000;    //最高速 空載2000
-//int Acceleration = 200; //加速度 空載200
+int Acceleration = 200; //加速度 空載200
 //int Max = 1300;         //1:80= 16000轉
 
 //PWM設置
@@ -54,7 +54,9 @@ int CarValue;
 int PowValue;
 int StopValue;
 
-int val = 0; //加速度變數
+int val = 90; //加速度變數
+int saveval = 90; //加速度變數
+int powertime = 50;//delay時間
 uint8_t status = 1; //為了loop不要重複運行設定狀態變數只運行一次
 
 void setup()
@@ -65,12 +67,12 @@ void setup()
     return;
   }
   Serial.begin(115200); //設定鮑率
-  RCF.attach(RCFPin, 1000, 2000);
-  RCB.attach(RCBPin, 1000, 2000);
+  RCF.attach(RCFPin,4,0,180,1000,2000);
+  RCB.attach(RCBPin,6,0,180,1000,2000);
+  RCL.attach(RCLPin,1);
+  RCR.attach(RCRPin,2);
   RCF.write(90);
   RCB.write(90);
-  RCL.attach(RCLPin);
-  RCR.attach(RCRPin);
   pinMode(PUL, OUTPUT);
   pinMode(DIR, OUTPUT);
   pinMode(ENB, OUTPUT);
@@ -78,6 +80,13 @@ void setup()
   digitalWrite(ENB, LOW);
   stepper.setEnablePin(ENB);
   stepper.disableOutputs();
+  stepper.setMaxSpeed(MaxSpeed);
+  stepper.setAcceleration(Acceleration);
+  stepper.setCurrentPosition(0);
+  StepValue = Ste.toInt();//將 String轉換成int
+  CarValue = Car.toInt();//將 String轉換成int
+  PowValue = Pow.toInt();//將 String轉換成int
+  StopValue = Stop.toInt();//將 String轉換成int
   // Connect to Wi-Fi network with SSID and password
   Serial.print("Connecting to ");
   Serial.println(ssid);             //顯示SSID
@@ -104,8 +113,13 @@ void setup()
       {
         Car = request->arg(i);
         CarValue = Car.toInt();//將 String轉換成int
-        StopValue = 0;
         status = 0;//更新狀態
+        if (CarValue!=2)
+        {
+          RCR.write(0);//釋放煞車
+          RCL.write(0);//釋放煞車
+          StopValue = 0;
+        }
       }
       else if (request->argName(i) == "pow")//GET網站出力狀態
       {
@@ -139,84 +153,84 @@ void loop()
   {
     Step(2);
   }
-  else if (status == 0)//讀取狀態
+  if (status == 0)//讀取狀態
   {
-    moto();
+    moto(CarValue, PowValue);
   }
-  else if (StopValue == 1 || Ultrasound(TRIG,ECHO) <= 40)//如果接收P檔或超音波小於40cm就停止
+  if (StopValue == 1 /*|| Ultrasound(TRIG,ECHO) <= 40*/)//如果接收P檔或超音波小於40cm就停止
   {
     STOP();
   }
 }
 
-void moto()//馬達控制 目前還要修正操作順暢度 可能會使用ESP32的第二核心運行減少延遲
+void moto(int Value, int Power)
 {
-  RCR.write(180);//釋放煞車
-  RCL.write(180);//釋放煞車
-  int pow = PowValue;//加速度值
-  int RC = RCF.read();//初始讀取馬達狀態
-  int RCS = RCF.read();//停止中時持續讀取馬達狀態
-  int time = 10;//delay時間
-  while (CarValue == 1)//前
+  while (Value == 1)
   {
-    if (RC == 90)//如果停就加速度前進
+    if (saveval<=90)
     {
-      RCF.write(90 + val);//加速度
-      RCB.write(90 + val);//加速度
+      RCF.write(val);
+      RCF.write(val);
       Serial.print("SetValue:");
       Serial.println(RCF.read());
-      delay(time);
+      Serial.println(val);
+      delay(powertime);
     }
-    if (val == pow || RC == (90 + pow))//如果速度達到要求就跳出
+    if (val == (90+Power))
     {
+      saveval=val;
       Serial.println("close1");
       break;
     }
-    val++;//累加
+    val++;
   }
-  while (CarValue == 2)//停
+  while (Value == 2)
   {
-    if (RC > 90)//如果是前進就減速度停止
+    if (val == 90)
     {
-      RCF.write(90 + val);//減速度
-      RCB.write(90 + val);//減速度
-      Serial.print("SetValue:");
-      Serial.println(RCF.read());
-      delay(time);
-    }
-    else if (RC < 90)//如果是後退就減速度停止
-    {
-      RCF.write(90 - val);//減速度
-      RCB.write(90 - val);//減速度
-      Serial.print("SetValue:");
-      Serial.println(RCF.read());
-      delay(time);
-    }
-    RCS = RCF.read();
-    if (val == 0 || RCS == 90)//如果停止達到要求就跳出
-    {
-      val = 0;//重置累加
+      saveval=val;
       Serial.println("close2");
       break;
     }
-    val--;//累加
-  }
-  while (CarValue == 3)//後
-  {
-    if (RC == 90)//如果停就加速度後退
+    if (saveval<90)
     {
-      RCF.write(90 - val);//加速度
-      RCB.write(90 - val);//加速度
+      RCF.write(val);
+      RCF.write(val);
       Serial.print("SetValue:");
       Serial.println(RCF.read());
-      delay(time);
+      Serial.println(val);
+      delay(powertime);
+      val ++;
     }
-    if (val == pow || RC == (90 - pow))//如果速度達到要求就跳出
+    if (saveval>90)
     {
+      RCF.write(val);
+      RCF.write(val);
+      Serial.print("SetValue:");
+      Serial.println(RCF.read());
+      Serial.println(val);
+      delay(powertime);
+      val --;
+    }
+  }
+  while (Value == 3)
+  {
+    if (saveval>=90)
+    {
+      RCF.write(val);
+      RCF.write(val);
+      Serial.print("SetValue:");
+      Serial.println(RCF.read());
+      Serial.println(val);
+      delay(powertime);
+    }
+    if (val == (90 - Power))
+    {
+      saveval=val;
       Serial.println("close3");
       break;
     }
-    val++;//累加
+    val --;
   }
   status = 1;//更新狀態
 }
@@ -226,22 +240,26 @@ void Step(int Step)
   switch (Step)//這個方式在灌漿車上有做過了速度都可以在調整
   {
   case 1://左轉
-    stepper.setSpeed(2000);//設定速度
+    stepper.setSpeed(200);//設定速度
+    Serial.println("1");
     break;
   case 2://停
     stepper.setSpeed(0);
+    Serial.println("2");
     break;
   case 3://右轉
-    stepper.setSpeed(-2000);
+    stepper.setSpeed(-200);
+    Serial.println("3");
     break;
   }
 }
 
 void STOP()//P檔煞車動作
 {
-  moto();//減速停止
-  RCR.write(0);//加上煞車
-  RCL.write(0);
+  moto(2,90);
+  RCR.write(180);//加上煞車
+  RCL.write(180);
+  StopValue = 0;
 }
 
 int Ultrasound(int trigPin, int echoPin)
