@@ -1,10 +1,16 @@
 #include <Arduino.h>
 
 
-
+#ifdef ESP32
+#define TRIG 26
+#define ECHO 27
+#elif defined(ESP8266)
+#define TRIG 15
+#define ECHO 13
+#else
 #define TRIG 6
 #define ECHO 5
-
+#endif
 
 int Ultrasound(int trigPin, int echoPin)
 {

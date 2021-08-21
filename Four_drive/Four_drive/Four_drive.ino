@@ -236,7 +236,7 @@ void moto(int Value, int Power) //直流馬達加速度
     }
     val --;
   }
-  status = 1;//更新狀態
+  status = 0;//更新狀態
 }
 
 void Step(int Step)
