@@ -32,6 +32,9 @@ TaskHandle_t Task1;
 #define TRIG 23
 #define ECHO 22
 
+int counts;
+uint8_t UCstatus = 1; //為了loop不要重複運行設定狀態變數只運行一次
+
 //碰撞感應器
 #define SL 17
 #define SR 16
@@ -148,6 +151,9 @@ void setup()
 
 void loop()
 {
+  counts++;
+  Serial.print("計數：");
+  Serial.println(counts);
   stepper.runSpeed();//持續旋轉
   /*if (digitalRead(SL) == 1 || digitalRead(SR) == 1)//如果左或右碰到微動開關離即停止
   {
@@ -157,9 +163,28 @@ void loop()
   {
     moto(CarValue, PowValue);
   }
-  if (StopValue == 1 /*|| Ultrasound(TRIG,ECHO) <= 40*/)//如果接收P檔或超音波小於40cm就停止
+  if (StopValue == 1)//如果接收P檔或超音波小於40cm就停止
   {
     STOP();
+  }
+  if (Ultrasound(TRIG,ECHO) <= 40)
+  {
+    if (counts == 5)
+    {
+      Serial.println("counts 5 run done");
+      if (UCstatus == 1)
+      {
+        Serial.println("UC STOP");
+        STOP();
+        UCstatus = 0;
+      }
+    }
+  }
+  else
+  {
+    Serial.println("counts restart");
+    counts = 0;
+    UCstatus = 1;
   }
 }
 
@@ -260,6 +285,7 @@ void Step(int Step)
 
 void STOP()//P檔煞車動作
 {
+  Serial.println("STOP run");
   moto(2,90);
   RCR.write(180);//加上煞車
   RCL.write(180);
