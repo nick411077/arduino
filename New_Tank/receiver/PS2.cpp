@@ -63,7 +63,7 @@ void PS2::read()
             last_buttons = buttons;
             buttons =  (uint16_t)(Data[3] << 8) + Data[2];
         }
-        else
+        else //沒過驗證重新讀取舊數據
         {
             Serial.println("BUG");
             for (byte z = 0; z < sizeof(CheckData); z++)
