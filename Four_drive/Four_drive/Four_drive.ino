@@ -35,11 +35,14 @@ TaskHandle_t Task1;
 #define ECHO2 17
 
 int counts;
+int counts_run = 10;//超音波確認次數
+int Distance = 40;
 uint8_t UCstatus = 1; //為了loop不要重複運行設定狀態變數只運行一次
 
 //碰撞感應器
-#define SL 17
-#define SR 16
+#define SL 36
+#define SR 39
+char released[2] = {0,0}; //左右開關狀態
 
 //WiFi設置
 const char *ssid = "Lavender";
@@ -81,6 +84,8 @@ void setup()
   pinMode(PUL, OUTPUT);
   pinMode(DIR, OUTPUT);
   pinMode(ENB, OUTPUT);
+  pinMode(SL, INPUT);
+  pinMode(SR, INPUT);
   digitalWrite(DIR, HIGH);
   digitalWrite(ENB, LOW);
   stepper.setEnablePin(ENB);
@@ -161,7 +166,7 @@ void loop()
   Serial.print("計數：");
   Serial.println(counts);
   stepper.runSpeed();//持續旋轉
-  /*if (digitalRead(SL) == 1 || digitalRead(SR) == 1)//如果左或右碰到微動開關離即停止
+  if (ButtonPressed(SL,0) == 1 || ButtonPressed(SR,1) == 1)//如果左或右碰到微動開關離即停止
   {
     Step(2);
   }
@@ -187,9 +192,9 @@ void loop()
   {
     STOP();
   }
-  if (Ultrasound(TRIG,ECHO) <= 40)
+  if (Ultrasound(TRIG1,ECHO1) <= Distance)
   {
-    if (counts == 5)
+    if (counts == counts_run)
     {
       Serial.println("counts 5 run done");
       if (UCstatus == 1)
@@ -206,13 +211,14 @@ void loop()
     counts = 0;
     UCstatus = 1;
   }
+  delay(100);
 }
 
 void moto(int Value, int Power) //直流馬達加速度
 {
   while (Value == 1)//前進
   {
-    if (saveval<=90)//如果後退或停止的話進行減到前進
+    if (saveval<=(90+Power))//如果後退或停止的話進行減到前進
     {
       RCF.write(val);
       RCB.write(val);
@@ -263,7 +269,7 @@ void moto(int Value, int Power) //直流馬達加速度
   }
   while (Value == 3)//後退
   {
-    if (saveval>=90)//如果前進或停止的話進行減到後退
+    if (saveval>=(90 - Power))//如果前進或停止的話進行減到後退
     {
       RCF.write(val);
       RCB.write(val);
@@ -328,4 +334,28 @@ int Ultrasound(int trigPin, int echoPin)//超音波
   duration = duration / 28 / 2;
   if (duration > 80) return 100;
   return duration;
+}
+
+boolean ButtonPressed(uint8_t pin, int numder)//微動開關按下反應
+{
+  int i = 0;
+  if (digitalRead(pin) == HIGH)
+  {
+    i = 1;
+    if (released[numder] < 1)
+    {
+      released[numder] = 1;
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
+  else
+  {
+    i = 0;
+    released[numder] = 0;
+    return false;
+  }
 }
