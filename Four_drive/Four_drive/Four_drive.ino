@@ -29,8 +29,10 @@ Servo RCR;
 TaskHandle_t Task1;
 
 //超音波設置
-#define TRIG 23
-#define ECHO 22
+#define TRIG1 22
+#define ECHO1 23
+#define TRIG2 16
+#define ECHO2 17
 
 int counts;
 uint8_t UCstatus = 1; //為了loop不要重複運行設定狀態變數只運行一次
@@ -122,6 +124,10 @@ void setup()
           RCR.write(0);//釋放煞車
           RCL.write(0);//釋放煞車
           StopValue = 0;
+          if (UCstatus == 0 && CarValue != 3)
+          {
+            status = 0;
+          }
         }
       }
       else if (request->argName(i) == "pow")//GET網站出力狀態
@@ -158,7 +164,21 @@ void loop()
   /*if (digitalRead(SL) == 1 || digitalRead(SR) == 1)//如果左或右碰到微動開關離即停止
   {
     Step(2);
-  }*/
+  }
+  Serial.print("超音波1：");
+  Serial.println(Ultrasound(TRIG1,ECHO1));
+  Serial.print("超音波2：");
+  Serial.println(Ultrasound(TRIG2,ECHO2));
+  #ifdef DEBUG
+  Serial.print("計數：");
+  Serial.println(counts);
+  
+  for (size_t i = 0; i < sizeof(released); i++)
+  {
+    Serial.print(released[i], HEX);
+  }
+  Serial.println();
+  #endif
   if (status == 1)//讀取狀態
   {
     moto(CarValue, PowValue);
@@ -306,5 +326,6 @@ int Ultrasound(int trigPin, int echoPin)//超音波
   digitalWrite(trigPin, LOW);
   duration = pulseIn(echoPin, HIGH);
   duration = duration / 28 / 2;
+  if (duration > 80) return 100;
   return duration;
 }
