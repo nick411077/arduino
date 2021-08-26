@@ -6,6 +6,8 @@
 #include <AccelStepper.h>      //步進馬達函數庫
 #include <Stepper.h>           //步進馬達函數庫
 
+#define DEBUG //除錯測試模式
+
 //步進設置
 #define ENB 5
 #define DIR 18
@@ -24,9 +26,6 @@ Servo RCF;
 Servo RCB;
 Servo RCL;
 Servo RCR;
-
-//雙核運行
-TaskHandle_t Task1;
 
 //超音波設置
 #define TRIG1 22
@@ -62,6 +61,7 @@ int CarValue;
 int PowValue;
 int StopValue;
 
+//直流馬達加速度配置
 int val = 90; //加速度變數
 int saveval = 90; //加速度變數
 int powertime = 50;//delay時間
@@ -163,8 +163,6 @@ void setup()
 void loop()
 {
   counts++;
-  Serial.print("計數：");
-  Serial.println(counts);
   stepper.runSpeed();//持續旋轉
   if (ButtonPressed(SL,0) == 1 || ButtonPressed(SR,1) == 1)//如果左或右碰到微動開關離即停止
   {
@@ -207,7 +205,9 @@ void loop()
   }
   else
   {
+    #ifdef DEBUG
     Serial.println("counts restart");
+    #endif
     counts = 0;
     UCstatus = 1;
   }
@@ -222,10 +222,12 @@ void moto(int Value, int Power) //直流馬達加速度
     {
       RCF.write(val);
       RCB.write(val);
+      #ifdef DEBUG
       Serial.print("SetValue:");
       Serial.println(RCF.read());
       Serial.println(RCB.read());
       Serial.println(val);
+      #endif
       delay(powertime);
     }
     if (val == (90+Power))
@@ -248,10 +250,12 @@ void moto(int Value, int Power) //直流馬達加速度
     {
       RCF.write(val);
       RCB.write(val);
+      #ifdef DEBUG
       Serial.print("SetValue:");
       Serial.println(RCF.read());
       Serial.println(RCB.read());
       Serial.println(val);
+      #endif
       delay(powertime);
       val ++;
     }
@@ -259,10 +263,12 @@ void moto(int Value, int Power) //直流馬達加速度
     {
       RCF.write(val);
       RCB.write(val);
+      #ifdef DEBUG
       Serial.print("SetValue:");
       Serial.println(RCF.read());
       Serial.println(RCB.read());
       Serial.println(val);
+      #endif
       delay(powertime);
       val --;
     }
@@ -273,10 +279,12 @@ void moto(int Value, int Power) //直流馬達加速度
     {
       RCF.write(val);
       RCB.write(val);
+      #ifdef DEBUG
       Serial.print("SetValue:");
       Serial.println(RCF.read());
       Serial.println(RCB.read());
       Serial.println(val);
+      #endif
       delay(powertime);
     }
     if (val == (90 - Power))
@@ -296,15 +304,15 @@ void Step(int Step)
   {
   case 1://左轉
     stepper.setSpeed(500);//設定速度
-    Serial.println("1");
+    Serial.println("Step1");
     break;
   case 2://停
     stepper.setSpeed(0);
-    Serial.println("2");
+    Serial.println("Step2");
     break;
   case 3://右轉
     stepper.setSpeed(-500);
-    Serial.println("3");
+    Serial.println("Step3");
     break;
   }
 }
