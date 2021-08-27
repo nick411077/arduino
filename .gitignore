@@ -1,3 +1,4 @@
 .vscode/*.json
 .DS_Store
 .tmp*
+libraries/

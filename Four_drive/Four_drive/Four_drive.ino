@@ -6,7 +6,7 @@
 #include <AccelStepper.h>      //步進馬達函數庫
 #include <Stepper.h>           //步進馬達函數庫
 
-#define DEBUG //除錯測試模式
+//#define DEBUG //除錯測試模式
 
 //步進設置
 #define ENB 5
@@ -27,6 +27,9 @@ Servo RCB;
 Servo RCL;
 Servo RCR;
 
+//雙核運行
+TaskHandle_t Task1;
+
 //超音波設置
 #define TRIG1 22
 #define ECHO1 23
@@ -42,6 +45,7 @@ uint8_t UCstatus = 1; //為了loop不要重複運行設定狀態變數只運行�
 #define SL 36
 #define SR 39
 char released[2] = {0,0}; //左右開關狀態
+uint8_t Stepstatus = 1; //為了loop不要重複運行設定狀態變數只運行一次
 
 //WiFi設置
 const char *ssid = "Lavender";
@@ -64,7 +68,7 @@ int StopValue;
 //直流馬達加速度配置
 int val = 90; //加速度變數
 int saveval = 90; //加速度變數
-int powertime = 50;//delay時間
+int powertime = 20;//delay時間
 uint8_t status = 0; //為了loop不要重複運行設定狀態變數只運行一次
 
 void setup()
@@ -75,10 +79,10 @@ void setup()
     return;
   }
   Serial.begin(115200); //設定鮑率
-  RCF.attach(RCFPin,0,0,180,1000,2000);
-  RCB.attach(RCBPin,1,0,180,1000,2000);
-  RCL.attach(RCLPin,2);
-  RCR.attach(RCRPin,3);
+  RCF.attach(RCFPin,1,0,180,1000,2000);
+  RCB.attach(RCBPin,2,0,180,1000,2000);
+  RCL.attach(RCLPin,3);
+  RCR.attach(RCRPin,4);
   RCF.write(90);
   RCB.write(90);
   pinMode(PUL, OUTPUT);
@@ -93,6 +97,14 @@ void setup()
   stepper.setMaxSpeed(MaxSpeed);
   stepper.setAcceleration(Acceleration);
   stepper.setCurrentPosition(0);
+  xTaskCreatePinnedToCore(//雙核運行參數
+             Task1code, /* Task function. */
+             "Task1",   /* name of task. */
+             10000,     /* Stack size of task */
+             NULL,      /* parameter of the task */
+             1,         /* priority of the task */
+             &Task1,    /* Task handle to keep track of created task */
+             0);        /* pin task to core 0 */
   StepValue = Ste.toInt();//將 String轉換成int
   CarValue = Car.toInt();//將 String轉換成int
   PowValue = Pow.toInt();//將 String轉換成int
@@ -108,7 +120,7 @@ void setup()
     //Serial.println(args);
     for (int i = 0; i < args; i++)
     {
-      Serial.print("Param name: ");
+      Serial.print("Param name: ");//列出GET名稱
       Serial.println(request->argName(i));
       Serial.print("Param value: ");
       Serial.println(request->arg(i));
@@ -126,8 +138,8 @@ void setup()
         status = 1;//更新狀態
         if (CarValue!=2)
         {
-          RCR.write(0);//釋放煞車
-          RCL.write(0);//釋放煞車
+          RCR.write(10);//釋放煞車
+          RCL.write(10);//釋放煞車
           StopValue = 0;
           if (UCstatus == 0 && CarValue != 3)
           {
@@ -163,18 +175,25 @@ void setup()
 void loop()
 {
   counts++;
-  stepper.runSpeed();//持續旋轉
-  if (ButtonPressed(SL,0) == 1 || ButtonPressed(SR,1) == 1)//如果左或右碰到微動開關離即停止
+  if (ButtonPressed(SL, 0) == 1 || ButtonPressed(SR, 1) == 1) //如果左或右碰到微動開關離即停止
   {
-    Step(2);
+    if (StepValue == 1)
+    {
+      Step(2);
+      StepValue = 0;
+    }
   }
+  else
+  {
+    StepValue = 1;
+  }
+#ifdef DEBUG
+  Serial.print("計數：");
+  Serial.println(counts);
   Serial.print("超音波1：");
   Serial.println(Ultrasound(TRIG1,ECHO1));
   Serial.print("超音波2：");
   Serial.println(Ultrasound(TRIG2,ECHO2));
-  #ifdef DEBUG
-  Serial.print("計數：");
-  Serial.println(counts);
   
   for (size_t i = 0; i < sizeof(released); i++)
   {
@@ -190,12 +209,12 @@ void loop()
   {
     STOP();
   }
-  if (Ultrasound(TRIG1,ECHO1) <= Distance)
+  if (Ultrasound(TRIG1,ECHO1) <= Distance) //超音波小於40公分停止
   {
-    if (counts == counts_run)
+    if (counts == counts_run)//達到確認次數及停止
     {
-      Serial.println("counts 5 run done");
-      if (UCstatus == 1)
+      Serial.println("counts" + String(counts_run) + "run done");
+      if (UCstatus == 1)//判別使否有停止過了
       {
         Serial.println("UC STOP");
         STOP();
@@ -203,7 +222,7 @@ void loop()
       }
     }
   }
-  else
+  else //沒有達到40公分內重新計數
   {
     #ifdef DEBUG
     Serial.println("counts restart");
@@ -211,7 +230,6 @@ void loop()
     counts = 0;
     UCstatus = 1;
   }
-  delay(100);
 }
 
 void moto(int Value, int Power) //直流馬達加速度
@@ -248,8 +266,8 @@ void moto(int Value, int Power) //直流馬達加速度
     }
     if (saveval<90)//如果狀態後退加到停止
     {
-      RCF.write(val);
-      RCB.write(val);
+      RCF.write(val-10);
+      RCB.write(val-10);
       #ifdef DEBUG
       Serial.print("SetValue:");
       Serial.println(RCF.read());
@@ -277,8 +295,8 @@ void moto(int Value, int Power) //直流馬達加速度
   {
     if (saveval>=(90 - Power))//如果前進或停止的話進行減到後退
     {
-      RCF.write(val);
-      RCB.write(val);
+      RCF.write(val-10);
+      RCB.write(val-10);
       #ifdef DEBUG
       Serial.print("SetValue:");
       Serial.println(RCF.read());
@@ -300,10 +318,10 @@ void moto(int Value, int Power) //直流馬達加速度
 
 void Step(int Step)
 {
-  switch (Step)//這個方式在灌漿車上有做過了速度都可以在調整
+  switch (Step)
   {
   case 1://左轉
-    stepper.setSpeed(500);//設定速度
+    stepper.setSpeed(200);//設定速度
     Serial.println("Step1");
     break;
   case 2://停
@@ -311,7 +329,7 @@ void Step(int Step)
     Serial.println("Step2");
     break;
   case 3://右轉
-    stepper.setSpeed(-500);
+    stepper.setSpeed(-200);
     Serial.println("Step3");
     break;
   }
@@ -321,8 +339,8 @@ void STOP()//P檔煞車動作
 {
   Serial.println("STOP run");
   moto(2,90);
-  RCR.write(180);//加上煞車
-  RCL.write(180);
+  RCR.write(150);//加上煞車
+  RCL.write(150);
   Serial.println(RCR.read());
   Serial.println(RCL.read());
   StopValue = 0;
@@ -365,5 +383,17 @@ boolean ButtonPressed(uint8_t pin, int numder)//微動開關按下反應
     i = 0;
     released[numder] = 0;
     return false;
+  }
+}
+
+void Task1code(void *pvParameters)//雙核運行
+{
+  Serial.print("Task1 running on core ");
+  Serial.println(xPortGetCoreID());
+
+  for (;;)
+  {
+    stepper.runSpeed();//步進馬達運行防止loop進入迴圈導致停止運行
+    delay(1);
   }
 }
