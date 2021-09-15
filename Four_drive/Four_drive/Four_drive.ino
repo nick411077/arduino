@@ -202,7 +202,7 @@ void loop()
   {
     moto(CarValue, PowValue);
   }
-  if (StopValue == 1)//如果接收P檔或超音波小於40cm就停止
+  if (StopValue == 1)//如果接收P檔
   {
     STOP();
   }

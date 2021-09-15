@@ -9,6 +9,8 @@
 #include <rosserial_arduino/Adc.h>
 #include <geometry_msgs/Twist.h>
 
+//#define DEBUG //除錯測試模式
+
 //步進設置
 #define ENB 5
 #define DIR 18
@@ -52,17 +54,13 @@ uint8_t Stepstatus = 1; //為了loop不要重複運行設定狀態變數只運�
 int val = 90; //加速度變數
 int saveval = 90; //加速度變數
 int powertime = 20;//delay時間
-uint8_t status = 0; //為了loop不要重複運行設定狀態變數只運行一次
+uint8_t DCstatus = 0; //為了loop不要重複運行設定狀態變數只運行一次
 
-String Ste = String(5); //網站請求的方向變數
-String Car = String(2); //網站請求的方向變數
-String Pow = String(45); //網站請求的出力變數
-String Stop = String(0);
 //將 String轉換成int 
-int StepValue;
-int CarValue;
-int PowValue;
-int StopValue;
+int StepValue = 5;
+int CarValue = 2;
+int PowValue = 45;
+int StopValue = 0;
 
 //wifi賬號密碼
 const char* ssid = "罐頭new"; //ssid
@@ -121,27 +119,90 @@ void setupWiFi()
 
 std_msgs::String str_msg;
 ros::NodeHandle_<WiFiHardware> nh;//創建節點
+ros::Publisher chatter("chatter", &str_msg);
 ros::Subscriber<std_msgs::String> sub("message", &chatterCallback);
 
 
 void chatterCallback(const std_msgs::String& msg) 
 {
   String Msg = msg.data;
+  int MsgNumber;
   if (Msg == "w")
   {
     CarValue = 1;
+    if (UCstatus == 0)
+    {
+      DCstatus = 0;
+    }
+    else
+    {
+      DCstatus = 1;
+      RCR.write(10); //釋放煞車
+      RCL.write(10); //釋放煞車
+      StopValue = 0;
+    }
+    chatter.publish( &msg );
   }
   else if (Msg == "s")
   {
     CarValue = 2;
+    DCstatus = 1;
+    chatter.publish( &msg );
   }
-  
-  
+  else if (Msg == "x")
+  {
+    CarValue = 3;
+    DCstatus = 1;
+    RCR.write(10);//釋放煞車
+    RCL.write(10);//釋放煞車
+    StopValue = 0;
+    chatter.publish( &msg );
+  }
+  else if (Msg == "u")
+  {
+    StepValue= 1;
+    Step(StepValue);
+    chatter.publish( &msg );
+  }
+  else if (Msg == "i")
+  {
+    StepValue= 2;
+    Step(StepValue);
+    chatter.publish( &msg );
+  }
+  else if (Msg == "o")
+  {
+    StepValue= 3;
+    Step(StepValue);
+    chatter.publish( &msg );
+  }
+  else if (Msg == "space")
+  {
+    StopValue = 1;
+    chatter.publish( &msg );
+  }
+  else if (Msg == ",")
+  {
+    if (PowValue != 0)
+    {
+      PowValue -= 5;
+    }
+    Serial.println(PowValue);
+    chatter.publish( &msg );
+  }
+  else if (Msg == ".")
+  {
+    if (PowValue != 90)
+    {
+      PowValue += 5;
+    }
+    Serial.println(PowValue);
+    chatter.publish( &msg );
+  }
 }
 
 void setup() 
 {
-
   Serial.begin(115200);
   RCF.attach(RCFPin,1,0,180,1000,2000);
   RCB.attach(RCBPin,2,0,180,1000,2000);
@@ -169,14 +230,11 @@ void setup()
              1,         /* priority of the task */
              &Task1,    /* Task handle to keep track of created task */
              0);        /* pin task to core 0 */
-  StepValue = Ste.toInt();//將 String轉換成int
-  CarValue = Car.toInt();//將 String轉換成int
-  PowValue = Pow.toInt();//將 String轉換成int
-  StopValue = Stop.toInt();//將 String轉換成int
   setupWiFi(); // 連接wifi
   delay(2000);
 
   nh.initNode(); //節點初始化
+  nh.advertise(chatter); // 發布初始化
   nh.subscribe(sub); //添加主節點
 }
 
@@ -198,10 +256,10 @@ void loop(){
 #ifdef DEBUG
   Serial.print("計數：");
   Serial.println(counts);
-  Serial.print("超音波1：");
-  Serial.println(Ultrasound(TRIG1,ECHO1));
-  Serial.print("超音波2：");
-  Serial.println(Ultrasound(TRIG2,ECHO2));
+  //Serial.print("超音波1：");
+  //Serial.println(Ultrasound(TRIG1,ECHO1));
+  //Serial.print("超音波2：");
+  //Serial.println(Ultrasound(TRIG2,ECHO2));
   
   for (size_t i = 0; i < sizeof(released); i++)
   {
@@ -209,7 +267,7 @@ void loop(){
   }
   Serial.println();
   #endif
-  if (status == 1)//讀取狀態
+  if (DCstatus == 1)//讀取狀態
   {
     moto(CarValue, PowValue);
   }
@@ -321,7 +379,7 @@ void moto(int Value, int Power) //直流馬達加速度
     }
     val --;
   }
-  status = 0;//更新狀態
+  DCstatus = 0;//更新狀態
 }
 
 void Step(int Step)

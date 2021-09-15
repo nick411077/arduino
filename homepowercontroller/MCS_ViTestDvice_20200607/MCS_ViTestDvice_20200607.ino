@@ -55,8 +55,6 @@ void setup()
   mcs.addChannel(switch3);    //20200606
   mcs.addChannel(pwr_channel);  //20200606
   mcs.addChannel(pwr_monitor);  //20200707
-  mcs.addChannel(gps);
-  gps.set(  );
   Serial.print("Wi-Fi connecting to");
   Serial.println(ssid);
   WiFi.begin(ssid, pass);
