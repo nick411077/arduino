@@ -37,7 +37,7 @@ TaskHandle_t Task1;
 #define ECHO2 17
 
 int counts;
-int counts_run = 10;//超音波確認次數
+int counts_run = 20;//超音波確認次數
 int Distance = 40;
 uint8_t UCstatus = 1; //為了loop不要重複運行設定狀態變數只運行一次
 
@@ -57,7 +57,7 @@ AsyncWebServer server(80);
 // Decode HTTP GET 設置
 String Ste = String(5); //網站請求的方向變數
 String Car = String(2); //網站請求的方向變數
-String Pow = String(45); //網站請求的出力變數
+String Pow = String(30); //網站請求的出力變數
 String Stop = String(0);
 //將 String轉換成int 
 int StepValue;
@@ -136,15 +136,12 @@ void setup()
         Car = request->arg(i);
         CarValue = Car.toInt();//將 String轉換成int
         status = 1;//更新狀態
-        if (CarValue!=2)
+        RCR.write(10);//釋放煞車
+        RCL.write(10);//釋放煞車
+        StopValue = 0;
+        if (UCstatus == 0 && CarValue != 3)
         {
-          RCR.write(10);//釋放煞車
-          RCL.write(10);//釋放煞車
-          StopValue = 0;
-          if (UCstatus == 0 && CarValue != 3)
-          {
-            status = 0;
-          }
+          status = 0;
         }
       }
       else if (request->argName(i) == "pow")//GET網站出力狀態
@@ -266,8 +263,8 @@ void moto(int Value, int Power) //直流馬達加速度
     }
     if (saveval<90)//如果狀態後退加到停止
     {
-      RCF.write(val-10);
-      RCB.write(val-10);
+      RCF.write(val+5);
+      RCB.write(val+5);
       #ifdef DEBUG
       Serial.print("SetValue:");
       Serial.println(RCF.read());
@@ -295,8 +292,8 @@ void moto(int Value, int Power) //直流馬達加速度
   {
     if (saveval>=(90 - Power))//如果前進或停止的話進行減到後退
     {
-      RCF.write(val-10);
-      RCB.write(val-10);
+      RCF.write(val+5);
+      RCB.write(val+5);
       #ifdef DEBUG
       Serial.print("SetValue:");
       Serial.println(RCF.read());
@@ -321,16 +318,24 @@ void Step(int Step)
   switch (Step)
   {
   case 1://左轉
-    stepper.setSpeed(200);//設定速度
-    Serial.println("Step1");
+    if (ButtonPressed(SL, 0) == 0 )
+    {
+      stepper.setSpeed(200);//設定速度
+      Serial.println("Step1");
+    }
+    
     break;
   case 2://停
     stepper.setSpeed(0);
     Serial.println("Step2");
     break;
   case 3://右轉
-    stepper.setSpeed(-200);
-    Serial.println("Step3");
+    if (ButtonPressed(SR, 1) == 0 )
+    {
+      stepper.setSpeed(-200);
+      Serial.println("Step3");
+    }
+    
     break;
   }
 }
@@ -346,19 +351,18 @@ void STOP()//P檔煞車動作
   StopValue = 0;
 }
 
-int Ultrasound(int trigPin, int echoPin)//超音波
+double Ultrasound(int trigPin, int echoPin)//超音波
 {
   long duration;
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
   digitalWrite(trigPin, LOW);
-  delayMicroseconds(1);
+  delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
-  duration = pulseIn(echoPin, HIGH);
-  duration = duration / 28 / 2;
-  if (duration > 80) return 100;
+  duration = pulseIn(echoPin, HIGH) / 28 / 2;
+  if (duration > 60) return 100;
   return duration;
 }
 

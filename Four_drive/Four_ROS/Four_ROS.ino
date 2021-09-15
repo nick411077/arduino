@@ -274,8 +274,8 @@ void moto(int Value, int Power) //直流馬達加速度
     }
     if (saveval<90)//如果狀態後退加到停止
     {
-      RCF.write(val-10);
-      RCB.write(val-10);
+      RCF.write(val+5);
+      RCB.write(val+5);
       #ifdef DEBUG
       Serial.print("SetValue:");
       Serial.println(RCF.read());
@@ -303,8 +303,8 @@ void moto(int Value, int Power) //直流馬達加速度
   {
     if (saveval>=(90 - Power))//如果前進或停止的話進行減到後退
     {
-      RCF.write(val-10);
-      RCB.write(val-10);
+      RCF.write(val+5);
+      RCB.write(val+5);
       #ifdef DEBUG
       Serial.print("SetValue:");
       Serial.println(RCF.read());
@@ -329,16 +329,24 @@ void Step(int Step)
   switch (Step)
   {
   case 1://左轉
-    stepper.setSpeed(200);//設定速度
-    Serial.println("Step1");
+    if (ButtonPressed(SL, 0) == 0 )
+    {
+      stepper.setSpeed(200);//設定速度
+      Serial.println("Step1");
+    }
+    
     break;
   case 2://停
     stepper.setSpeed(0);
     Serial.println("Step2");
     break;
   case 3://右轉
-    stepper.setSpeed(-200);
-    Serial.println("Step3");
+    if (ButtonPressed(SR, 1) == 0 )
+    {
+      stepper.setSpeed(-200);
+      Serial.println("Step3");
+    }
+    
     break;
   }
 }
