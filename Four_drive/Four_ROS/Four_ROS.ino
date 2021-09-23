@@ -40,7 +40,7 @@ TaskHandle_t Task1;
 #define ECHO2 17
 
 int counts;
-int counts_run = 10;//超音波確認次數
+int counts_run = 20;//超音波確認次數
 int Distance = 40;
 uint8_t UCstatus = 1; //為了loop不要重複運行設定狀態變數只運行一次
 
@@ -59,7 +59,7 @@ uint8_t DCstatus = 0; //為了loop不要重複運行設定狀態變數只運行�
 //將 String轉換成int 
 int StepValue = 5;
 int CarValue = 2;
-int PowValue = 45;
+int PowValue = 30;
 int StopValue = 0;
 
 //wifi賬號密碼
@@ -147,6 +147,9 @@ void chatterCallback(const std_msgs::String& msg)
   {
     CarValue = 2;
     DCstatus = 1;
+    RCR.write(10); //釋放煞車
+    RCL.write(10); //釋放煞車
+    StopValue = 0;
     chatter.publish( &msg );
   }
   else if (Msg == "x")
@@ -271,7 +274,7 @@ void loop(){
   {
     moto(CarValue, PowValue);
   }
-  if (StopValue == 1)//如果接收P檔或超音波小於40cm就停止
+  if (StopValue == 1)//如果接收P檔
   {
     STOP();
   }
@@ -426,7 +429,7 @@ int Ultrasound(int trigPin, int echoPin)//超音波
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
   digitalWrite(trigPin, LOW);
-  delayMicroseconds(1);
+  delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);

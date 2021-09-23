@@ -351,7 +351,7 @@ void STOP()//P檔煞車動作
   StopValue = 0;
 }
 
-double Ultrasound(int trigPin, int echoPin)//超音波
+int Ultrasound(int trigPin, int echoPin)//超音波
 {
   long duration;
   pinMode(trigPin, OUTPUT);
@@ -361,8 +361,9 @@ double Ultrasound(int trigPin, int echoPin)//超音波
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
-  duration = pulseIn(echoPin, HIGH) / 28 / 2;
-  if (duration > 60) return 100;
+  duration = pulseIn(echoPin, HIGH);
+  duration = duration / 28 / 2;
+  if (duration > 80) return 100;
   return duration;
 }
 

@@ -108,8 +108,8 @@ void Test(int Value, int Power)
     }
     if (saveval<90)
     {
-      RCF.write(val);
-      RCF.write(val);
+      RCF.write(val+5);
+      RCF.write(val+5);
       Serial.print("SetValue:");
       Serial.println(RCF.read());
       Serial.println(val);
@@ -131,8 +131,8 @@ void Test(int Value, int Power)
   {
     if (saveval>=90)
     {
-      RCF.write(val);
-      RCF.write(val);
+      RCF.write(val+5);
+      RCF.write(val+5);
       Serial.print("SetValue:");
       Serial.println(RCF.read());
       Serial.println(val);
