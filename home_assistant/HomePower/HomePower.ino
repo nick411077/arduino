@@ -40,15 +40,15 @@ const PROGMEM char* MQTT_USER = "[Redacted]";
 const PROGMEM char* MQTT_PASSWORD = "[Redacted]";
 
 // MQTT: topics
-const char* MQTT_LIGHT_STATE_TOPIC[3] = "office/light1/status";
-const char* MQTT_LIGHT_COMMAND_TOPIC[3] = "office/light1/switch";
+const char* MQTT_LIGHT_STATE_TOPIC = "office/light1/status";
+const char* MQTT_LIGHT_COMMAND_TOPIC = "office/light1/switch";
 
 // payloads by default (on/off)
 const char* LIGHT_ON = "ON";
 const char* LIGHT_OFF = "OFF";
 
 const PROGMEM uint8_t LED_PIN = 2;
-boolean m_light_state[3] = {false,false,false}; // light is turned off by default
+boolean m_light_state = false; // light is turned off by default
 
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
