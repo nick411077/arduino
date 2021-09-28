@@ -11,12 +11,12 @@ const IPAddress pzemip(192,168,1,1);
 #define MQTT_VERSION MQTT_VERSION_3_1_1
 
 // Wifi: SSID and password
-const char* WIFI_SSID = "IoT office";
-const char* WIFI_PASSWORD = "Iot5195911";
+const char* WIFI_SSID = "罐頭new";
+const char* WIFI_PASSWORD = "nick520301";
 
 // MQTT: ID, server IP, port, username and password
 const PROGMEM char* MQTT_CLIENT_ID = "office_light";
-const PROGMEM char* MQTT_SERVER_IP = "120.106.21.240";
+const PROGMEM char* MQTT_SERVER_IP = "192.168.1.116";
 const PROGMEM uint16_t MQTT_SERVER_PORT = 1883;
 const PROGMEM char* MQTT_USER = "[Redacted]";
 const PROGMEM char* MQTT_PASSWORD = "[Redacted]";
@@ -83,10 +83,10 @@ void publishLightState(uint8_t i) {
 void setLightState(uint8_t i) {
   if (m_light_state[i]) {
     digitalWrite(LED_PIN[i], HIGH);
-    Serial.println("INFO: Turn light on...");
+    Serial.println("INFO: Turn Switch" + String(i+1) + " on...");
   } else {
     digitalWrite(LED_PIN[i], LOW);
-    Serial.println("INFO: Turn light off...");
+    Serial.println("INFO: Turn Switch" + String(i+1) + " off...");
   }
 }
 
@@ -138,7 +138,7 @@ void reconnect() {
       // ... and resubscribe
       for (size_t i = 0; i < 3; i++)
       {
-        publishLightState(i);
+        //publishLightState(i); //發布者有啟用保留可以在重起時讀取舊數據可以不用預設關閉
         client.subscribe(MQTT_LIGHT_COMMAND_TOPIC[i]);
       }
     } else {
@@ -157,14 +157,14 @@ void setup()
   setup_wifi();
   client.setServer(MQTT_SERVER_IP, MQTT_SERVER_PORT);
   client.setCallback(callback);
-  while (true)
+  /*while (true)
   {
     Serial.print("Connecting to PZEM...");
     if (pzem.setAddress(pzemip))
       break;
     Serial.print(".");
     delay(500);
-  }
+  }*/
 }
 
 
