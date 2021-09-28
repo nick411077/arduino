@@ -2,14 +2,35 @@
 #include <PZEM004T.h>
 #include <PubSubClient.h>
 
+//PZEM
 HardwareSerial PzemSerial2(2);
 PZEM004T pzem(&PzemSerial2); // (RX,TX) connect to TX,RX of PZEM
-
 int channelNo=1;      //0606計算顯示第幾電力支路變數
 const IPAddress pzemip(192,168,1,1);
-const IPAddress server(192,168,1,116);
-const char* ssid = "IoT office";
-const char* pass = "Iot5195911";
+
+#define MQTT_VERSION MQTT_VERSION_3_1_1
+
+// Wifi: SSID and password
+const char* WIFI_SSID = "IoT office";
+const char* WIFI_PASSWORD = "Iot5195911";
+
+// MQTT: ID, server IP, port, username and password
+const PROGMEM char* MQTT_CLIENT_ID = "office_light";
+const PROGMEM char* MQTT_SERVER_IP = "120.106.21.240";
+const PROGMEM uint16_t MQTT_SERVER_PORT = 1883;
+const PROGMEM char* MQTT_USER = "[Redacted]";
+const PROGMEM char* MQTT_PASSWORD = "[Redacted]";
+
+// MQTT: topics
+const char* MQTT_LIGHT_STATE_TOPIC[3] = {"office/light1/status","office/light2/status","office/light3/status"};
+const char* MQTT_LIGHT_COMMAND_TOPIC[3] = {"office/light1/switch","office/light2/switch","office/light3/switch"};
+
+// payloads by default (on/off)
+const char* LIGHT_ON = "ON";
+const char* LIGHT_OFF = "OFF";
+
+const PROGMEM uint8_t LED_PIN[3] = {5,18,19};
+boolean m_light_state[3] = {false,false,false}; // light is turned off by default
 
 float cur =0;      //電流
 float vol=0;      //電壓
@@ -32,10 +53,10 @@ void setup_wifi() {
   // We start by connecting to a WiFi network
   Serial.println();
   Serial.print("Connecting to ");
-  Serial.println(ssid);
+  Serial.println(WIFI_SSID);
 
   WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, pass);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -50,44 +71,80 @@ void setup_wifi() {
   Serial.println(WiFi.localIP());
 }
 
-void callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Message arrived [");
-  Serial.print(topic);
-  Serial.print("] ");
-  for (int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
-  }
-  Serial.println();
-
-  // Switch on the LED if an 1 was received as first character
-  if ((char)payload[0] == '1') {
-    digitalWrite(BUILTIN_LED, LOW);   // Turn the LED on (Note that LOW is the voltage level
-    // but actually the LED is on; this is because
-    // it is active low on the ESP-01)
+void publishLightState(uint8_t i) {
+  if (m_light_state[i]) {
+    client.publish(MQTT_LIGHT_STATE_TOPIC[i], LIGHT_ON, true);
   } else {
-    digitalWrite(BUILTIN_LED, HIGH);  // Turn the LED off by making the voltage HIGH
+    client.publish(MQTT_LIGHT_STATE_TOPIC[i], LIGHT_OFF, true);
   }
+}
 
+// function called to turn on/off the light
+void setLightState(uint8_t i) {
+  if (m_light_state[i]) {
+    digitalWrite(LED_PIN[i], HIGH);
+    Serial.println("INFO: Turn light on...");
+  } else {
+    digitalWrite(LED_PIN[i], LOW);
+    Serial.println("INFO: Turn light off...");
+  }
+}
+
+// function called when a MQTT message arrived
+void callback(char* p_topic, byte* p_payload, unsigned int p_length) {
+  // concat the payload into a string
+  String payload;
+  for (uint8_t i = 0; i < p_length; i++) {
+    payload.concat((char)p_payload[i]);
+  }
+  
+  // handle message topic
+  for (uint8_t i = 0; i < 3; i++)
+  {
+    if (String(MQTT_LIGHT_COMMAND_TOPIC[i]).equals(p_topic))
+    {
+      // test if the payload is equal to "ON" or "OFF"
+      if (payload.equals(String(LIGHT_ON)))
+      {
+        if (m_light_state[i] != true)
+        {
+          m_light_state[i] = true;
+          setLightState(i);
+          publishLightState(i);
+        }
+      }
+      else if (payload.equals(String(LIGHT_OFF)))
+      {
+        if (m_light_state[i] != false)
+        {
+          m_light_state[i] = false;
+          setLightState(i);
+          publishLightState(i);
+        }
+      }
+    }
+  }
+  
 }
 
 void reconnect() {
   // Loop until we're reconnected
   while (!client.connected()) {
-    Serial.print("Attempting MQTT connection...");
-    // Create a random client ID
-    String clientId = "ESP8266Client-";
-    clientId += String(random(0xffff), HEX);
+    Serial.println("INFO: Attempting MQTT connection...");
     // Attempt to connect
-    if (client.connect(clientId.c_str())) {
-      Serial.println("connected");
+    if (client.connect(MQTT_CLIENT_ID)) {
+      Serial.println("INFO: connected");
       // Once connected, publish an announcement...
-      client.publish("outTopic", "hello world");
       // ... and resubscribe
-      client.subscribe("inTopic");
+      for (size_t i = 0; i < 3; i++)
+      {
+        publishLightState(i);
+        client.subscribe(MQTT_LIGHT_COMMAND_TOPIC[i]);
+      }
     } else {
-      Serial.print("failed, rc=");
+      Serial.print("ERROR: failed, rc=");
       Serial.print(client.state());
-      Serial.println(" try again in 5 seconds");
+      Serial.println("DEBUG: try again in 5 seconds");
       // Wait 5 seconds before retrying
       delay(5000);
     }
@@ -98,7 +155,7 @@ void setup()
 {
   Serial.begin(115200);
   setup_wifi();
-  client.setServer(server, 1883);
+  client.setServer(MQTT_SERVER_IP, MQTT_SERVER_PORT);
   client.setCallback(callback);
   while (true)
   {
@@ -117,16 +174,6 @@ void loop()
     reconnect();
   }
   client.loop();
-
-  unsigned long now = millis();
-  if (now - lastMsg > 2000) {
-    lastMsg = now;
-    ++value;
-    snprintf (msg, MSG_BUFFER_SIZE, "hello world #%ld", value);
-    Serial.print("Publish message: ");
-    Serial.println(msg);
-    client.publish("outTopic", msg);
-  }
 }
 
 void getdata()
