@@ -1,10 +1,10 @@
  #include <Servo.h>
 byte x[30];
 byte LineCMD[8]={0x01,0x03,0x00,0x28,0x00,0x01,0x04,0x02};//循線命令
-Servo myservo1;  
-Servo myservo2;
-Servo myservo3;
-Servo myservo4;
+Servo RC1;  
+Servo RC2;
+Servo RC3;
+Servo RC4;
 int times=0;
 String MoveData = "";                            // 接收訊息
 char mode='1';// 手自動模式變數 
@@ -13,10 +13,10 @@ void setup() {
   // Open serial communications and wait for port to open:
   Serial.begin(9600);
   Serial1.begin(115200);
-  myservo1.attach(6,1000,2000); 
-  myservo2.attach(7,1000,2000);  
-  myservo3.attach(8,1000,2000);
-  myservo4.attach(9,1000,2000);
+  RC1.attach(6,1000,2000); 
+  RC2.attach(7,1000,2000);  
+  RC3.attach(8,1000,2000);
+  RC4.attach(9,1000,2000);
 }
 
 void loop() 
@@ -175,73 +175,73 @@ String getValue(String data, char separator, int index){                  //拆�
 }
 
 void Moveforwardr(){//修右
-  myservo1.write(120);
-  myservo3.write(120);
-  myservo2.write(69);
-  myservo4.write(69);
+  RC1.write(120);
+  RC3.write(120);
+  RC2.write(69);
+  RC4.write(69);
 }
 void Moveforwardr3(){//中修右
-  myservo1.write(120);
-  myservo3.write(120);
-  myservo2.write(72);
-  myservo4.write(72);
+  RC1.write(120);
+  RC3.write(120);
+  RC2.write(72);
+  RC4.write(72);
 }
 void Moveforwardr1(){//中修右
-  myservo1.write(120);
-  myservo3.write(120);
-  myservo2.write(79);
-  myservo4.write(79);
+  RC1.write(120);
+  RC3.write(120);
+  RC2.write(79);
+  RC4.write(79);
 }
 void Moveforwardr2(){//大修右
-  myservo1.write(120);
-  myservo3.write(120);
-  myservo2.write(120);
-  myservo4.write(120);
+  RC1.write(120);
+  RC3.write(120);
+  RC2.write(120);
+  RC4.write(120);
 }
 void Moveforwardl(){//修左
-  myservo1.write(113);
-  myservo3.write(113);
-  myservo2.write(63);
-  myservo4.write(63);
+  RC1.write(113);
+  RC3.write(113);
+  RC2.write(63);
+  RC4.write(63);
 }
 void Moveforwardl3(){//小修左
-  myservo1.write(110);
-  myservo3.write(110);
-  myservo2.write(63);
-  myservo4.write(63);
+  RC1.write(110);
+  RC3.write(110);
+  RC2.write(63);
+  RC4.write(63);
 }
 void Moveforwardl1(){//中修左
-  myservo1.write(103);
-  myservo3.write(103);
-  myservo2.write(63);
-  myservo4.write(63);
+  RC1.write(103);
+  RC3.write(103);
+  RC2.write(63);
+  RC4.write(63);
 }
 void Moveforwardl2(){//大修左
-  myservo1.write(63);
-  myservo3.write(63);
-  myservo2.write(63);
-  myservo4.write(63);
+  RC1.write(63);
+  RC3.write(63);
+  RC2.write(63);
+  RC4.write(63);
 }
 
 
 
 void Moveforward() {  //前進
-  myservo1.write(120);
-  myservo3.write(120);
-  myservo2.write(63);
-  myservo4.write(63);
+  RC1.write(120);
+  RC3.write(120);
+  RC2.write(63);
+  RC4.write(63);
 }
 void Moveback() {  //後退
-  myservo1.write(63);
-  myservo3.write(63);
-  myservo2.write(120);
-  myservo4.write(120);
+  RC1.write(63);
+  RC3.write(63);
+  RC2.write(120);
+  RC4.write(120);
 }
 void Moveright() {   //原地向右旋轉
-  myservo2.write(120);
-  myservo1.write(120);
-  myservo3.write(120);       
-  myservo4.write(120);          
+  RC2.write(120);
+  RC1.write(120);
+  RC3.write(120);       
+  RC4.write(120);          
 }
 void turnright(){  //遇到右側有路，右轉動作 
   Stop();
@@ -262,14 +262,14 @@ void turnleft(){  //遇到左側有路，左轉動作
 //以上兩個動作是先做暫停，讓車體不要移動，前進1秒，讓旋轉中心到線上(以利轉彎後偵測到磁帶時，車體與磁帶較平行)
 //原地旋轉3.4秒到磁帶上面
 void Moveleft() {  //原地向左旋轉
-  myservo1.write(63);
-  myservo3.write(63);
-  myservo2.write(63);
-  myservo4.write(63);
+  RC1.write(63);
+  RC3.write(63);
+  RC2.write(63);
+  RC4.write(63);
 }
 void Stop() {    //車機停止
-  myservo1.write(90); 
-  myservo2.write(90); 
-  myservo3.write(90); 
-  myservo4.write(90);
+  RC1.write(90); 
+  RC2.write(90); 
+  RC3.write(90); 
+  RC4.write(90);
 }
