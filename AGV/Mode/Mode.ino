@@ -95,17 +95,8 @@ void Line()//發送循線命令
 
 void LineCMDValue()//接收循線讀值 
 {
-  int i=0;
-  while(Serial1.available()) 
-  {
-    delay(1);
-    x[i]=Serial1.read();
-    i++;
-  }
-  if ((i==7)&&(x[0]==0x01))
-  {
-    Serial.println(x[4]);//顯示循線讀值 
-  } 
+  Serial.readBytes(x, 8);
+  Serial.println(x[4]);//顯示循線讀值 
 }
 void RobotCMD(){
   if(Serial.available() > 0){                                 //確認暫存區是否有資料
