@@ -1,6 +1,7 @@
 .vscode/*.json
 .DS_Store
 .tmp*
+*.docx
 libraries/
 bulid/
-*.docx
+
