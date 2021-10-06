@@ -1,4 +1,13 @@
  #include <Servo.h>
+
+#define RED_LED 36
+#define YELLOW_LED 37
+#define GREEN_LED 38
+#define TONE_PIN 39
+
+byte LedMode = 0;
+byte OldLedMode = 0;
+
 byte x[30];
 byte LineCMD[8]={0x01,0x03,0x00,0x28,0x00,0x01,0x04,0x02};//循線命令
 Servo RC1;  
@@ -9,7 +18,16 @@ int times=0;
 String MoveData = "";                            // 接收訊息
 char mode='1';// 手自動模式變數 
 
-void setup() {
+long previousTime = 0;  // 用來保存前一次狀態的時間
+long interval = 1000;   // 讀取間隔時間，單位為毫秒(miliseconds)
+unsigned long currentTime;
+
+int times = 0;
+String MoveData = ""; // 接收訊息
+char mode = '1';      // 手自動模式變數
+
+void setup()
+{
   // Open serial communications and wait for port to open:
   Serial.begin(9600);
   Serial1.begin(115200);
@@ -24,6 +42,14 @@ void loop()
   
   while (mode=='0') // 手動模式
   {
+    if (OldLedMode==4)
+    {
+      LedMode = 0;
+    }
+    else
+    {
+      LedMode = 4;
+    }
     Serial.println("aaa");
     RobotCMD();//透過Pi網頁遙控用,去UNO暫存器取值並拆解後,回傳控制車子的命令
   }
@@ -79,7 +105,14 @@ void loop()
           }
           break;
           }
-delay(100);
+  if (currentTime - previousTime > interval)
+  {
+    LED(LedMode);
+    OldLedMode = LedMode;
+    previousTime = currentTime;
+  }
+   
+  delay(100);
 }
 
 void Line()//發送循線命令
@@ -263,4 +296,62 @@ void Stop() {    //車機停止
   RC2.write(90); 
   RC3.write(90); 
   RC4.write(90);
+}
+
+void DigitalWrite(uint8_t pinNumber, uint8_t status)
+{
+  pinMode(pinNumber, OUTPUT);
+  digitalWrite(pinNumber, status);
+}
+
+void LED(byte value)
+{
+  switch (value)
+  {
+  case 0: //全熄
+    DigitalWrite(GREEN_LED, LOW);
+    DigitalWrite(YELLOW_LED, LOW);
+    DigitalWrite(RED_LED, LOW);
+    DigitalWrite(TONE_PIN, LOW);
+    break;
+  case 1: //紅燈
+    DigitalWrite(GREEN_LED, LOW);
+    DigitalWrite(YELLOW_LED, LOW);
+    DigitalWrite(RED_LED, HIGH);
+    DigitalWrite(TONE_PIN, HIGH);
+    break;
+  case 2: //黃燈
+    DigitalWrite(GREEN_LED, LOW);
+    DigitalWrite(YELLOW_LED, HIGH);
+    DigitalWrite(RED_LED, LOW);
+    break;
+  case 3: //紅黃燈
+    DigitalWrite(GREEN_LED, LOW);
+    DigitalWrite(YELLOW_LED, HIGH);
+    DigitalWrite(RED_LED, HIGH);
+    break;
+  case 4: //綠燈
+    DigitalWrite(GREEN_LED, HIGH);
+    DigitalWrite(YELLOW_LED, LOW);
+    DigitalWrite(RED_LED, LOW);
+    break;
+  case 5: //綠紅燈
+    DigitalWrite(GREEN_LED, HIGH);
+    DigitalWrite(YELLOW_LED, LOW);
+    DigitalWrite(RED_LED, HIGH);
+    break;
+  case 6: //綠黃燈
+    DigitalWrite(GREEN_LED, HIGH);
+    DigitalWrite(YELLOW_LED, HIGH);
+    DigitalWrite(RED_LED, LOW);
+    break;
+  case 7: //全亮燈
+    DigitalWrite(GREEN_LED, HIGH);
+    DigitalWrite(YELLOW_LED, HIGH);
+    DigitalWrite(RED_LED, HIGH);
+    break;
+  case 8: //嗡鳴器
+    DigitalWrite(TONE_PIN, LOW);
+    break;
+  }
 }
