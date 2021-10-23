@@ -15,19 +15,19 @@ const IPAddress pzemip(192,168,1,1);
 #define MQTT_VERSION MQTT_VERSION_3_1_1
 
 // Wifi: SSID and password
-const char* WIFI_SSID = "罐頭new";
-const char* WIFI_PASSWORD = "nick520301";
+const char* WIFI_SSID = "IoT office";
+const char* WIFI_PASSWORD = "Iot5195911";
 
 // MQTT: ID, server IP, port, username and password
-const PROGMEM char* MQTT_CLIENT_ID = "office_light";
-const PROGMEM char* MQTT_SERVER_IP = "192.168.1.116";
+const PROGMEM char* MQTT_CLIENT_ID = "office_switch";
+const PROGMEM char* MQTT_SERVER_IP = "120.106.21.240";
 const PROGMEM uint16_t MQTT_SERVER_PORT = 1883;
 const PROGMEM char* MQTT_USER = "[Redacted]";
 const PROGMEM char* MQTT_PASSWORD = "[Redacted]";
 
 // MQTT: topics
-const char* MQTT_LIGHT_STATE_TOPIC[3] = {"office/light1/status","office/light2/status","office/light3/status"};
-const char* MQTT_LIGHT_COMMAND_TOPIC[3] = {"office/light1/switch","office/light2/switch","office/light3/switch"};
+const char* MQTT_LIGHT_STATE_TOPIC[3] = {"office/switch1/status","office/switch2/status","office/switch3/status"};
+const char* MQTT_LIGHT_COMMAND_TOPIC[3] = {"office/switch1/switch","office/switch2/switch","office/switch3/switch"};
 
 const char* MQTT_SENSOR_TOPIC[3] = {"office/sensor/switch1","office/sensor/switch2","office/sensor/switch3"};
 
@@ -35,15 +35,15 @@ const char* MQTT_SENSOR_TOPIC[3] = {"office/sensor/switch1","office/sensor/switc
 const char* LIGHT_ON = "ON";
 const char* LIGHT_OFF = "OFF";
 const PROGMEM uint8_t PZEM_PIN[3] = {12,14,27};
-const PROGMEM uint8_t LED_PIN[3] = {5,18,19};
+const PROGMEM uint8_t LED_PIN[3] = {19,18,5};
 
-boolean m_light_state[3] = {false,false,false}; // light is turned off by default
+boolean m_switch_state[3] = {false,false,false}; // switch is turned off by default
 
-unsigned int delaytime = 10000;
-float cur = 5.84;      //電流
-float vol = 120.58;      //電壓
-float powe = 50.5;     //功率
-float powehr = 40.72;
+uint delaytime = 5000;
+float cur = 0;      //電流
+float vol = 0;      //電壓
+float powe = 0;     //功率
+float powehr = 0;
 
 
 WiFiClient wifiClient;
@@ -73,12 +73,13 @@ void setup_wifi() {
   Serial.println(WiFi.localIP());
 }
 
-void publishData(uint8_t i, float p_voltage, float p_current, float p_power, float p_energy) {
+void publishData(uint8_t p_i, float p_voltage, float p_current, float p_power, float p_energy) {
   // create a JSON object
   // doc : https://github.com/bblanchon/ArduinoJson/wiki/API%20Reference
   StaticJsonDocument<200> jsonBuffer;
   JsonObject root = jsonBuffer.to<JsonObject>();
   // INFO: the data must be converted into a string; a problem occurs when using floats...
+  root["value"] =  (String)p_i+1;
   root["voltage"] = (String)p_voltage;
   root["current"] = (String)p_current;
   root["power"] = (String)p_power;
@@ -95,25 +96,25 @@ void publishData(uint8_t i, float p_voltage, float p_current, float p_power, flo
   */
   char data[200];
   serializeJson(root, data, measureJson(root) + 1);
-  client.publish(MQTT_SENSOR_TOPIC[i], data, true);
+  client.publish(MQTT_SENSOR_TOPIC[p_i], data, true);
   yield();
 }
 
 void publishLightState(uint8_t i) {
-  if (m_light_state[i]) {
+  if (m_switch_state[i]) {
     client.publish(MQTT_LIGHT_STATE_TOPIC[i], LIGHT_ON, true);
   } else {
     client.publish(MQTT_LIGHT_STATE_TOPIC[i], LIGHT_OFF, true);
   }
 }
 
-// function called to turn on/off the light
+// function called to turn on/off the switch
 void setLightState(uint8_t i) {
-  if (m_light_state[i]) {
-    digitalWrite(LED_PIN[i], HIGH);
+  if (m_switch_state[i]) {
+    DigitalWrite(LED_PIN[i], HIGH);
     Serial.println("INFO: Turn Switch" + String(i+1) + " on...");
   } else {
-    digitalWrite(LED_PIN[i], LOW);
+    DigitalWrite(LED_PIN[i], LOW);
     Serial.println("INFO: Turn Switch" + String(i+1) + " off...");
   }
 }
@@ -134,18 +135,18 @@ void callback(char* p_topic, byte* p_payload, unsigned int p_length) {
       // test if the payload is equal to "ON" or "OFF"
       if (payload.equals(String(LIGHT_ON)))
       {
-        if (m_light_state[i] != true)
+        if (m_switch_state[i] != true)
         {
-          m_light_state[i] = true;
+          m_switch_state[i] = true;
           setLightState(i);
           publishLightState(i);
         }
       }
       else if (payload.equals(String(LIGHT_OFF)))
       {
-        if (m_light_state[i] != false)
+        if (m_switch_state[i] != false)
         {
-          m_light_state[i] = false;
+          m_switch_state[i] = false;
           setLightState(i);
           publishLightState(i);
         }
@@ -182,7 +183,14 @@ void reconnect() {
 void setup()
 {
   Serial.begin(115200);
-  Serial2.begin(115200);
+  xTaskCreatePinnedToCore(//雙核運行參數
+             Task1code, /* Task function. */
+             "Task1",   /* name of task. */
+             10000,     /* Stack size of task */
+             NULL,      /* parameter of the task */
+             1,         /* priority of the task */
+             &Task1,    /* Task handle to keep track of created task */
+             0);        /* pin task to core 0 */
   setup_wifi();
   client.setServer(MQTT_SERVER_IP, MQTT_SERVER_PORT);
   client.setCallback(callback);
@@ -194,14 +202,6 @@ void setup()
     Serial.print(".");
     delay(500);
   }
-  xTaskCreatePinnedToCore(//雙核運行參數
-             Task1code, /* Task function. */
-             "Task1",   /* name of task. */
-             10000,     /* Stack size of task */
-             NULL,      /* parameter of the task */
-             1,         /* priority of the task */
-             &Task1,    /* Task handle to keep track of created task */
-             0);        /* pin task to core 0 */
 }
 
 
@@ -215,18 +215,17 @@ void loop()
 
 void getdata(uint8_t i)
 {
-  //cur = pzem.current(pzemip);
+  cur = pzem.current(pzemip);
   Serial.print("Pzem Current(A): ");
   Serial.println(cur);
-  //vol = pzem.voltage(pzemip);
+  vol = pzem.voltage(pzemip);
   Serial.print("Pzem Current(V): ");
   Serial.println(vol);
-  //powe = pzem.power(pzemip);
+  powe = pzem.power(pzemip);
   Serial.print("Pzem Current(W): ");
   Serial.println(powe);
-  //powehr = pzem.energy(pzemip);
-  powehr = random(300);
-  Serial.print("Pzem Current(W): ");
+  powehr = pzem.energy(pzemip);
+  Serial.print("Pzem Current(Wh): ");
   Serial.println(powehr);
   if (vol < 0) vol = 0;
   if (cur < 0) cur = 0;
@@ -235,15 +234,15 @@ void getdata(uint8_t i)
   publishData(i, vol, cur, powe, powehr);
 }
 
-void EnergySwitch(uint8_t i, unsigned int TIME)
+void EnergySwitch(uint8_t i ,uint TIME)
 {
-  digitalWrite(PZEM_PIN[i], HIGH);
-  getdata(i);
+  DigitalWrite(PZEM_PIN[i],HIGH);
   delay(TIME);
-  digitalWrite(PZEM_PIN[i], LOW);
+  getdata(i);
+  DigitalWrite(PZEM_PIN[i],LOW);
 }
 
-void Task1code(void *pvParameters)//雙核運行
+void Task1code(void *pvParameters) //雙核運行
 {
   Serial.print("Task1 running on core ");
   Serial.println(xPortGetCoreID());
@@ -254,6 +253,11 @@ void Task1code(void *pvParameters)//雙核運行
     {
       EnergySwitch(i, delaytime);
     }
-    delay(1);
   }
+}
+
+void DigitalWrite(int pinNumber, boolean status)
+{
+    pinMode(pinNumber, OUTPUT);
+    digitalWrite(pinNumber, status);
 }
