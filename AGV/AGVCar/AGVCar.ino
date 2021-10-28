@@ -36,7 +36,7 @@ byte rfidCMD[8] = {0x01, 0x03, 0x00, 0x06, 0x00, 0x04, 0xA4, 0x08}; //rfidD命�
 byte RobotCMD[5] = {0x25, 0x05, 0x00, 0x00, 0xFF};
 String MoveData = ""; // 接收pi訊息
 byte mode = 0;     // 手自動模式變數
-byte oldmode;
+byte oldmode = 1;  //儲存舊狀態
 // ---
 
 // 馬達宣告
@@ -62,8 +62,8 @@ void setup()
   // ----
 
   // AGV自動模式上傳設置
-  LineModeSetup();
   RFIDModeSetup();
+  LineModeSetup();
   
   // 馬達初始化
   RC1.attach(6, 1000, 2000);
@@ -166,14 +166,14 @@ void AutoMode(){
 }
 // -------
 
-byte LineModeSetup(byte Mode =0,byte OldMode =1)//Line自手模式上傳設置 因為可能會導致暫存區爆滿
+void LineModeSetup()//Line自手模式上傳設置 因為可能會導致暫存區爆滿
 {
   byte x[15];
-  if (Mode == 0 && OldMode == 1) // 手動模式
+  if (mode == 0 && oldmode == 1) // 手動模式
   {
     LineSerial.write(LineManualSetup, sizeof(LineManualSetup));
     LineSerial.flush();
-#ifdef DEBUG
+    #ifdef DEBUG
     if (LineSerial.available() > 0)
     {
       LineSerial.readBytes(x, 15);
@@ -185,14 +185,14 @@ byte LineModeSetup(byte Mode =0,byte OldMode =1)//Line自手模式上傳設置 �
       Serial.write(0xFF);
       Serial.println();
     }
-#endif
+    #endif
     while (LineSerial.read() >= 0){}
   }
-  else if (Mode == 1 && OldMode == 0) //自動模式
+  else if (mode == 1 && oldmode == 0) //自動模式
   {
     LineSerial.write(LineAutoSetup, sizeof(LineAutoSetup));
     LineSerial.flush();
-#ifdef DEBUG
+    #ifdef DEBUG
     if (LineSerial.available() > 0)
     {
       LineSerial.readBytes(x, 15);
@@ -204,12 +204,12 @@ byte LineModeSetup(byte Mode =0,byte OldMode =1)//Line自手模式上傳設置 �
       Serial.write(0xFF);
       Serial.println();
     }
-#endif
+    #endif
     while (LineSerial.read() >= 0){}
   }
 }
 
-byte RFIDModeSetup()//RFID自動模式上傳設置
+void RFIDModeSetup()//RFID自動模式上傳設置
 {
   byte x[15];
   RFIDSerial.write(rfidSetup,sizeof(rfidSetup));
