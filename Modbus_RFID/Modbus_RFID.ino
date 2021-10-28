@@ -28,7 +28,7 @@ void rfidCMDValue()//接收RFID讀值
 {
   if (Serial1.available() > 0) 
   {
-    Serial1.readBytes(x, 13);
+    Serial1.readBytes(x, 15);
     for (byte i = 0; i < sizeof(x); i++)
     {
       Serial.print(x[i], HEX);
