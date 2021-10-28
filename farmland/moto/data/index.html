@@ -124,59 +124,7 @@
   <div class="Value">
   <p>Mode: <span id="modePos"></span> Car: <span id="carPos"></span> Power: <span id="powPos"></span></p>
   </div>
-  <script>
-    var direction = document.getElementsByClassName("direction");
-    var carP = document.getElementById("carPos");
-    carP.innerHTML = direction[4].value; //顯示預設的值 Stop
-    car = direction[4].name;
-    for (var i = 0; i < direction.length; i++) {
-      direction[i].onclick = function () {
-        carP.innerHTML = this.value;
-        car = this.name;
-        value("dir",car);
-      }
-    }
-    var mode = document.getElementById("mode");
-    var modeP = document.getElementById("modePos");
-    modeP.innerHTML = "Manual";
-    M = mode.checked;
-    mode.onchange = function () {//接收
-      if (mode.checked)
-      {
-        modeP.innerHTML = "Auto";
-        M = 1;
-      }
-      else
-      {
-        modeP.innerHTML = "Manual";
-        M = 0;
-      }
-      
-      value("mode",M);
-    }
-
-    var Value = document.getElementById("powvalue");
-    var powP = document.getElementById("powPos");
-    powP.innerHTML = Value.value; //顯示預設的值 會顯示中間值
-    Value.oninput = function () {
-      Value.value = this.value;
-      powP.innerHTML = this.value;
-      delayShowData("pwm",Value.value);
-    }
-    var timers = {};
-      function delayShowData(type, values) {
-        clearTimeout(timers[type]);
-        timers[type] = setTimeout(function () {
-          $('span.' + type).text(values[0] + 'mm - ' + values[1] + 'mm');
-          value(type, values);
-        }, 300);
-      }
-    $.ajaxSetup({ timeout: 1000 });
-    function value(type,pos) {
-      $.get("/?"+ type +"=" + pos + "&");
-      { Connection: close };
-    }
-  </script>
+  <script src="script.js"></script>
   </body>
 
   </html>
