@@ -8,14 +8,16 @@
 byte LedMode = 0;
 byte OldLedMode = 0;
 
-byte x[30];
+byte Line[15];
+byte rfid[15];
+byte rfidCMD[8]={0x01,0x03,0x00,0x28,0x00,0x04,0xA4,0x08};//rfidD命令
 byte LineCMD[8] = {0x01, 0x03, 0x00, 0x28, 0x00, 0x01, 0x04, 0x02}; //循線命令
-byte RobotCMD[8] = {0x25, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,};
+byte RobotCMD[5] = {0x25, 0x05, 0x00, 0x00, 0xFF};
 Servo RC1;
 Servo RC2;
 Servo RC3;
 Servo RC4;
-Servo RC5;
+Servo RC5;//升降馬達
 
 long previousTime = 0;  // 用來保存前一次狀態的時間
 long interval = 1000;   // 讀取間隔時間，單位為毫秒(miliseconds)
@@ -23,7 +25,7 @@ unsigned long currentTime;
 
 int times = 0;
 String MoveData = ""; // 接收訊息
-char mode = '1';      // 手自動模式變數
+boolean mode = 1;      // 手自動模式變數
 
 void setup()
 {
@@ -40,23 +42,164 @@ void setup()
 void loop()
 {
   currentTime = millis();
-  while (mode == '0') // 手動模式
+  RobotRead();
+  if (mode == 1)//自動模式
   {
-    if (OldLedMode==4)
+    LedMode = 4;
+    rfidCMDValue();//RFID讀取
+    LineWrite(); //AGV自主循線用,接收AGV reader的傳回值,並發送循線命令
+    Auto();//自動尋線
+  }
+  else if (mode ==0)//手動模式
+  {
+    if (OldLedMode==2)
     {
       LedMode = 0;
     }
     else
     {
-      LedMode = 4;
+      LedMode = 2;
     }
-    Serial.println("aaa");
-    RobotCMDValue(); //透過Pi網頁遙控用,去UNO暫存器取值並拆解後,回傳控制車子的命令
   }
-  RobotCMDValue();
-  Line(); //AGV自主循線用,接收AGV reader的傳回值,並發送循線命令
-  Serial.println(x[4]);
-  switch (x[4])
+  if (currentTime - previousTime > interval)//每一秒發送一次訊息給Node-Red
+  {
+    RGYLED(LedMode);
+    RobotWrite();
+    OldLedMode = LedMode;
+    previousTime = currentTime;
+  }
+   
+  delay(100);
+}
+
+void LineWrite() //發送循線命令
+{
+  Serial1.write(LineCMD,sizeof(LineCMD));
+  Serial1.flush();
+  LineCMDValue(); //接收循線讀值
+}
+
+void LineCMDValue() //接收循線讀值
+{
+  Serial1.readBytes(Line, 8);
+}
+
+void rfidCMDValue()//接收RFID讀值 
+{
+  int i=0;
+  while (Serial2.available()) 
+  {
+    delay(1);
+    rfid[i]=Serial2.read();
+    i++;
+  }
+  if ((i==8)&&(rfid[0]==0x01))
+  {
+    Serial.print("RH_");
+    Serial.println(rfid[4],DEC);//顯示RFID讀值 
+    Serial.print("RL_");
+    Serial.println(rfid[5],DEC);//顯示RFID讀值 
+  } 
+}
+
+void RobotRead()
+{ // 讀取樹梅派訊息
+  if (Serial.available() > 0)
+  { //確認暫存區是否有資料
+    for (int i = 0; i < 100; i++)
+    {
+      if (Serial.available() > 0)
+      {
+        char dataByte = Serial.read(); //讀取暫存區資料
+        if (dataByte == '#')
+        {
+          RobotCommand(getValue(MoveData, '_', 0)); //拆解資料並回傳控制
+          MoveData = "";
+          return;
+        }
+        MoveData += dataByte;
+        break;
+      }
+      break;
+    }
+  }
+}
+
+void RobotWrite()//發送Node-Red訊息
+{
+  byte Robot = 0;
+  RobotCMD[2] = 0;
+  if (mode == 1){RobotCMD[2] =+ 1;}
+  RobotCMD[3] = LedMode;
+  Serial.write(RobotCMD,sizeof(RobotCMD));
+  Serial.flush();
+}
+
+void RobotCommand(String command)//Node-Red發送指令訊息
+{
+  if (command == "a")
+  { // 車體前進
+    Moveforward();
+  }
+  if (command == "b")
+  { // 車體後退
+    Moveback();
+  }
+  if (command == "c")
+  { // 車體左轉
+    Moveleft();
+  }
+  if (command == "d")
+  { // 車體右轉
+    Moveright();
+  }
+  if (command == "e")
+  { // 車體停止
+    Stop();
+  }
+  if (command == "u")
+  { // 上升
+    /* code */
+  }
+  if (command == "i")
+  { // 停止
+    /* code */
+  }
+  if (command == "o")
+  { // 下降
+    /* code */
+  }
+  if (command == "f")
+  { // 手動模式
+    mode = 0;
+  }
+  if (command == "g")
+  { // 自動模式
+    mode = 1;
+  }
+}
+
+String getValue(String data, char separator, int index)
+{ //拆解資料
+  int found = 0;
+  int strIndex[] = {0, -1};
+  int maxIndex = data.length() - 1;
+
+  for (int i = 0; i <= maxIndex && found <= index; i++)
+  {
+    if (data.charAt(i) == separator || i == maxIndex)
+    {
+      found++;
+      strIndex[0] = strIndex[1] + 1;
+      strIndex[1] = (i == maxIndex) ? i + 1 : i;
+    }
+  }
+  return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
+}
+
+void Auto()
+{
+  switch (Line[4])
   {
   case 60: //正中間3456號
     Moveforward();
@@ -99,126 +242,13 @@ void loop()
     break;
   case 0: //無偵測到
     Moveleft();
-    if ((x[4] == 128) || (x[4] == 192) || (x[4] == 224))
+    if ((Line[4] == 128) || (Line[4] == 192) || (Line[4] == 224))
     {
       Stop();
       delay(300);
     }
     break;
   }
-  if (currentTime - previousTime > interval)
-  {
-    LED(LedMode);
-    OldLedMode = LedMode;
-    previousTime = currentTime;
-  }
-   
-  delay(100);
-}
-
-void Line() //發送循線命令
-{
-  Serial.println("sss");
-  Serial1.write(LineCMD,sizeof(LineCMD));
-  Serial1.flush();
-  LineCMDValue(); //接收循線讀值
-}
-
-void LineCMDValue() //接收循線讀值
-{
-  Serial.readBytes(x, 8);
-  Serial.println(x[4]); //顯示循線讀值
-}
-void RobotCMDValue()
-{ // 讀取樹梅派訊息
-  if (Serial.available() > 0)
-  { //確認暫存區是否有資料
-    for (int i = 0; i < 100; i++)
-    {
-      if (Serial.available() > 0)
-      {
-        char dataByte = Serial.read(); //讀取暫存區資料
-        if (dataByte == '#')
-        {
-          RobotCommand(getValue(MoveData, '_', 0)); //拆解資料並回傳控制
-          MoveData = "";
-          return;
-        }
-        MoveData += dataByte;
-        break;
-      }
-      break;
-    }
-  }
-}
-
-void Robot()
-{
-  Serial.write(RobotCMD,sizeof(RobotCMD));
-  Serial.flush();
-}
-
-void RobotCommand(String command)
-{
-  if (command == "a")
-  { // 車體前進
-    Moveforward();
-  }
-  if (command == "b")
-  { // 車體後退
-    Moveback();
-  }
-
-  if (command == "c")
-  { // 車體左轉
-    Moveleft();
-  }
-  if (command == "d")
-  { // 車體右轉
-    Moveright();
-  }
-  if (command == "e")
-  { // 車體停止
-    Stop();
-  }
-  if (command == "u")
-  { // 上升
-    /* code */
-  }
-  if (command == "i")
-  { // 停止
-    /* code */
-  }
-  if (command == "o")
-  { // 下降
-    /* code */
-  }
-  if (command == "f")
-  { // 手動模式
-    mode = '0';
-  }
-  if (command == "g")
-  { // 自動模式
-    mode = '1';
-  }
-}
-
-String getValue(String data, char separator, int index)
-{ //拆解資料
-  int found = 0;
-  int strIndex[] = {0, -1};
-  int maxIndex = data.length() - 1;
-
-  for (int i = 0; i <= maxIndex && found <= index; i++)
-  {
-    if (data.charAt(i) == separator || i == maxIndex)
-    {
-      found++;
-      strIndex[0] = strIndex[1] + 1;
-      strIndex[1] = (i == maxIndex) ? i + 1 : i;
-    }
-  }
-  return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
 
 void Moveforwardr()
@@ -332,15 +362,15 @@ void Stop()
   RC2.write(90);
   RC3.write(90);
   RC4.write(90);
-}
+} 
 
-void DigitalWrite(uint8_t pinNumber, uint8_t status)
+void DigitalWrite(uint8_t pinNumber, uint8_t status)//整合
 {
   pinMode(pinNumber, OUTPUT);
   digitalWrite(pinNumber, status);
 }
 
-void LED(byte value)
+void RGYLED(byte value)//三色燈控制
 {
   switch (value)
   {
@@ -387,7 +417,7 @@ void LED(byte value)
     DigitalWrite(RED_LED, HIGH);
     break;
   case 8: //嗡鳴器
-    DigitalWrite(TONE_PIN, LOW);
+    DigitalWrite(TONE_PIN, HIGH);
     break;
   }
 }
