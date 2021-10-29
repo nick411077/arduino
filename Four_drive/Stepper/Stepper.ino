@@ -91,10 +91,10 @@ void setup()
 void loop()
 {
   stepper.runSpeed();//持續旋轉
-  if (digitalRead(SL) == 1 || digitalRead(SR) == 1)//如果左或右碰到微動開關離即停止
+  /*if (digitalRead(SL) == 1 || digitalRead(SR) == 1)//如果左或右碰到微動開關離即停止
   {
     Step(2);
-  }
+  }*/
 }
 
 void Step(int Step)
@@ -102,7 +102,7 @@ void Step(int Step)
   switch (Step)//這個方式在灌漿車上有做過了速度都可以在調整
   {
   case 1://左轉
-    stepper.setSpeed(200);//設定速度
+    stepper.setSpeed(100000);//設定速度
     Serial.println("1");
     break;
   case 2://停
@@ -110,7 +110,7 @@ void Step(int Step)
     Serial.println("2");
     break;
   case 3://右轉
-    stepper.setSpeed(-200);
+    stepper.setSpeed(-100000);
     Serial.println("3");
     break;
   }
