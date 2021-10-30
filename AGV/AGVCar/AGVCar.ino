@@ -1,6 +1,7 @@
+#include <Arduino.h>
 #include <Servo.h>
 
-//#define DEBUG //除錯測試模式
+#define DEBUG //除錯測試模式
 //#define Manual //發送返回模式
 
 // 提示燈
@@ -19,7 +20,7 @@ unsigned long currentTime;
 // -----------
 
 //巡線宣告
-byte LineData[15];
+byte LineData[30];
 byte LineAutoSetup[8]={0x01, 0x06, 0x00, 0x2F, 0x00, 0x05, 0x78, 0x00};
 byte LineManualSetup[8]= {0x01, 0x06, 0x00, 0x2F, 0x00, 0x00, 0xB8, 0x03};//自手動切換有問題就放棄
 byte LineCMD[8] = {0x01, 0x03, 0x00, 0x28, 0x00, 0x01, 0x04, 0x02}; 
@@ -50,18 +51,17 @@ Servo RC4;
 Servo RC5;
 // ---------
 
-HardwareSerial LineSerial(Serial1);//RFID
-HardwareSerial RFIDSerial(Serial2);//Line
 
 void setup()
 {
   // 通道
   Serial.begin(115200);//pi
-  LineSerial.begin(115200);//Line
-  RFIDSerial.begin(115200);//RFID
+  Serial1.begin(115200);//Line
+  Serial2.begin(115200);//RFID
   // ----
 
   // AGV自動模式上傳設置
+  Serial.println("setup");
   RFIDModeSetup();
   LineModeSetup();
   
@@ -83,13 +83,18 @@ void loop()
   oldmode = mode;
   RobotRead(); // 讀取pi訊息
   #ifdef Manual
-  LineModeSetup(mode,oldmode);//自手動切換
+  #else
+  if (mode >=1 && oldmode == 0 )//RFID clear
+  {
+    while (Serial1.read() >= 0){}
+    while (Serial2.read() >= 0){}
+  }
   #endif // Manual
   // 手動
   if (mode == 0)
   {
     // 提示燈
-    if (OldLedMode==2)
+    if (OldLedMode == 2)
     {
       LedMode = 0;
     }
@@ -97,7 +102,9 @@ void loop()
     {
       LedMode = 2;
     }
-  }else { //自動模式
+  }
+  else
+  { //自動模式
     AutoMode();
   }
 
@@ -109,8 +116,7 @@ void loop()
     OldLedMode = LedMode;
     previousTime = currentTime;
   }
-   
-  delay(100);
+  delay(10);
 }
 
 
@@ -118,8 +124,6 @@ void loop()
 void AutoMode(){
     LedMode = 4; //燈號
     byte CardReader = RFIDRead(); // 讀取卡號
-    LineRead(); //AGV自主循線用,接收AGV reader的傳回值,並發送循線命令
-    Auto(); //巡線
     if (CardReader == mode){
         CardReaderTemporaryStorage = 0;
         mode = 0;
@@ -134,7 +138,7 @@ void AutoMode(){
             CardReaderTemporaryStorage = CardReader;//放入暫存
             LineRead(); //AGV自主循線用,接收AGV reader的傳回值,並發送循線命令
             Auto(); //巡線
-        }else if (mode > CardReaderTemporaryStorage && CardReaderTemporaryStorage >= CardReader )
+        }else if (CardReaderTemporaryStorage <= CardReader )
         {
             CardReaderTemporaryStorage = CardReader;//放入暫存
             LineRead(); //AGV自主循線用,接收AGV reader的傳回值,並發送循線命令
@@ -151,7 +155,7 @@ void AutoMode(){
             CardReaderTemporaryStorage = CardReader;//放入暫存
             LineRead(); //AGV自主循線用,接收AGV reader的傳回值,並發送循線命令
             Auto(); //巡線
-        }else if (mode < CardReaderTemporaryStorage && CardReaderTemporaryStorage <= CardReader )
+        }else if (CardReaderTemporaryStorage >= CardReader )
         {
             CardReaderTemporaryStorage = CardReader;//放入暫存
             LineRead(); //AGV自主循線用,接收AGV reader的傳回值,並發送循線命令
@@ -168,108 +172,82 @@ void AutoMode(){
 
 void LineModeSetup()//Line自手模式上傳設置 因為可能會導致暫存區爆滿
 {
-  byte x[15];
-  if (mode == 0 && oldmode == 1) // 手動模式
+  byte l[15];
+  Serial1.write(LineAutoSetup, sizeof(LineAutoSetup));
+  Serial1.flush();
+  delay(10);
+#ifdef DEBUG
+  if (Serial1.available() > 0)
   {
-    LineSerial.write(LineManualSetup, sizeof(LineManualSetup));
-    LineSerial.flush();
-    #ifdef DEBUG
-    if (LineSerial.available() > 0)
+    Serial1.readBytes(l, 15);
+    for (byte i = 0; i < sizeof(l); i++)
     {
-      LineSerial.readBytes(x, 15);
-      for (byte i = 0; i < sizeof(x); i++)
-      {
-        Serial.print(x[i], HEX);
-        Serial.print(",");
-      }
-      Serial.write(0xFF);
-      Serial.println();
-    }
-    #endif
-    while (LineSerial.read() >= 0){}
-  }
-  else if (mode == 1 && oldmode == 0) //自動模式
-  {
-    LineSerial.write(LineAutoSetup, sizeof(LineAutoSetup));
-    LineSerial.flush();
-    #ifdef DEBUG
-    if (LineSerial.available() > 0)
-    {
-      LineSerial.readBytes(x, 15);
-      for (byte i = 0; i < sizeof(x); i++)
-      {
-        Serial.print(x[i], HEX);
-        Serial.print(",");
-      }
-      Serial.write(0xFF);
-      Serial.println();
-    }
-    #endif
-    while (LineSerial.read() >= 0){}
-  }
-}
-
-void RFIDModeSetup()//RFID自動模式上傳設置
-{
-  byte x[15];
-  RFIDSerial.write(rfidSetup,sizeof(rfidSetup));
-  RFIDSerial.flush();
-  
-  if (RFIDSerial.available() > 0) 
-  {
-    #ifdef DEBUG
-    RFIDSerial.readBytes(x, 15);
-    for (byte i = 0; i < sizeof(x); i++)
-    {
-      Serial.print(x[i], HEX);
+      Serial.print(l[i], HEX);
       Serial.print(",");
     }
-    Serial.write(0xFF);
     Serial.println();
-    #endif
-    while (RFIDSerial.read() >= 0){}
   }
-  
-  
+#endif
+  while (Serial1.read() >= 0){}
 }
 
-byte LineRead() //接收循線讀值
+void RFIDModeSetup() //RFID自動模式上傳設置
+{
+  byte r[15];
+  Serial2.write(rfidSetup, sizeof(rfidSetup));
+  Serial2.flush();
+  delay(10);
+  if (Serial2.available() > 0)
+  {
+#ifdef DEBUG
+    Serial2.readBytes(r, 15);
+    for (byte i = 0; i < sizeof(r); i++)
+    {
+      Serial.print(r[i], HEX);
+      Serial.print(",");
+    }
+    Serial.println();
+#endif
+    while (Serial2.read() >= 0){}
+  }
+}
+
+void LineRead() //接收循線讀值
 {
   #ifdef Manual
-  LineSerial.write(LineCMD,sizeof(LineCMD));
-  LineSerial.flush();
+  Serial1.write(LineCMD,sizeof(LineCMD));
+  Serial1.flush();
+  delay(10);
   #endif
-  if (LineSerial.available() > 0) 
+  if (Serial1.available() > 0) 
   {
-    LineSerial.readBytes(LineData, 15);
+    Serial1.readBytes(LineData, 8);
     #ifdef DEBUG
     for (byte i = 0; i < sizeof(LineData); i++)
     {
       Serial.print(LineData[i], HEX);
       Serial.print(",");
     }
-    Serial.write(0xFF);
     Serial.println();
     #endif
   }
-  return LineData[4];
+
 }
 
 byte RFIDRead()//接收RFID讀值 
 {
-  if (RFIDSerial.available() > 0) 
+  if (Serial2.available() > 0) 
   {
-    RFIDSerial.readBytes(rfidData, 15);
+    Serial2.readBytes(rfidData, 15);
     #ifdef DEBUG
     for (byte i = 0; i < sizeof(rfidData); i++)
     {
       Serial.print(rfidData[i], HEX);
       Serial.print(",");
     }
-    Serial.write(0xFF);
     Serial.println();
     #endif
-    return rfidData[5];
+    return rfidData[9];
   }
   return 0;
 }
@@ -385,7 +363,7 @@ String getValue(String data, char separator, int index)
 // 巡線
 void Auto()
 {
-  switch (LineData[4])
+  switch (LineData[5])
   {
   case 60: //正中間3456號
     Moveforward();
@@ -428,7 +406,7 @@ void Auto()
     break;
   case 0: //無偵測到
     Moveleft();
-    if ((LineData[4] == 128) || (LineData[4] == 192) || (LineData[4] == 224))
+    if ((LineData[5] == 128) || (LineData[5] == 192) || (LineData[5] == 224))
     {
       Stop();
       delay(300);
