@@ -19,6 +19,8 @@ long interval = 1000;   // 讀取間隔時間，單位為毫秒(miliseconds)
 unsigned long currentTime;
 // -----------
 
+byte AGV[8] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+
 //巡線宣告
 byte LineData[30];
 byte LineAutoSetup[8]={0x01, 0x06, 0x00, 0x2F, 0x00, 0x05, 0x78, 0x00};
@@ -88,6 +90,8 @@ void loop()
   {
     while (Serial1.read() >= 0){}
     while (Serial2.read() >= 0){}
+    Serial2.write(rfidCMD,sizeof(rfidCMD));
+    Serial1.flush();
   }
   #endif // Manual
   // 手動
@@ -130,19 +134,16 @@ void AutoMode(){
         Stop();
     }else if (CardReader == 0)
     {
-        LineRead(); //AGV自主循線用,接收AGV reader的傳回值,並發送循線命令
-        Auto(); //巡線
+        Auto(LineRead()); //巡線
     }else if (CardReader < mode)
     {
         if(CardReaderTemporaryStorage == 0){
             CardReaderTemporaryStorage = CardReader;//放入暫存
-            LineRead(); //AGV自主循線用,接收AGV reader的傳回值,並發送循線命令
-            Auto(); //巡線
+            Auto(LineRead()); //巡線
         }else if (CardReaderTemporaryStorage <= CardReader )
         {
             CardReaderTemporaryStorage = CardReader;//放入暫存
-            LineRead(); //AGV自主循線用,接收AGV reader的傳回值,並發送循線命令
-            Auto(); //巡線
+            Auto(LineRead()); //巡線
         }else{
             CardReaderTemporaryStorage = CardReader;
             Moveleft();
@@ -153,13 +154,11 @@ void AutoMode(){
     {
         if(CardReaderTemporaryStorage == 0){
             CardReaderTemporaryStorage = CardReader;//放入暫存
-            LineRead(); //AGV自主循線用,接收AGV reader的傳回值,並發送循線命令
-            Auto(); //巡線
+            Auto(LineRead()); //巡線
         }else if (CardReaderTemporaryStorage >= CardReader )
         {
             CardReaderTemporaryStorage = CardReader;//放入暫存
-            LineRead(); //AGV自主循線用,接收AGV reader的傳回值,並發送循線命令
-            Auto(); //巡線
+            Auto(LineRead()); //巡線
         }else{
             CardReaderTemporaryStorage = CardReader;
             Moveleft();
@@ -212,7 +211,7 @@ void RFIDModeSetup() //RFID自動模式上傳設置
   }
 }
 
-void LineRead() //接收循線讀值
+byte LineRead() //接收循線讀值
 {
   #ifdef Manual
   Serial1.write(LineCMD,sizeof(LineCMD));
@@ -230,8 +229,14 @@ void LineRead() //接收循線讀值
     }
     Serial.println();
     #endif
+    return LineData[5];
   }
+  return 0;
+}
 
+boolean Line(uint8_t number)
+{
+  return ((~LineRead() & number) > 0);
 }
 
 byte RFIDRead()//接收RFID讀值 
@@ -325,21 +330,22 @@ void RobotCommand(String command)
   }
   // 自動模式
   if (command == "1")
-  { 
-    mode = 1;
-  }else if (command == "2")
   {
-      mode = 2;
+    mode = 1;
+  }
+  else if (command == "2")
+  {
+    mode = 2;
   }
   else if (command == "3")
   {
-      mode = 3;
-  }else if (command == "4")
+    mode = 3;
+  }
+  else if (command == "4")
   {
-      mode = 4;
+    mode = 4;
   }
   //-------------
-    
 }
 
 String getValue(String data, char separator, int index)
@@ -361,9 +367,9 @@ String getValue(String data, char separator, int index)
 }
 
 // 巡線
-void Auto()
+void Auto(byte dir)
 {
-  switch (LineData[5])
+  switch (dir)
   {
   case 60: //正中間3456號
     Moveforward();
@@ -406,7 +412,7 @@ void Auto()
     break;
   case 0: //無偵測到
     Moveleft();
-    if ((LineData[5] == 128) || (LineData[5] == 192) || (LineData[5] == 224))
+    if ((dir == 128) || (dir == 192) || (dir == 224))
     {
       Stop();
       delay(300);
