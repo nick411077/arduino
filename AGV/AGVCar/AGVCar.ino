@@ -22,10 +22,11 @@ unsigned long currentTime;
 byte AGV[8] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
 
 //巡線宣告
-byte LineData[30];
+byte LineData[15];
 byte LineAutoSetup[8]={0x01, 0x06, 0x00, 0x2F, 0x00, 0x05, 0x78, 0x00};
 byte LineManualSetup[8]= {0x01, 0x06, 0x00, 0x2F, 0x00, 0x00, 0xB8, 0x03};//自手動切換有問題就放棄
 byte LineCMD[8] = {0x01, 0x03, 0x00, 0x28, 0x00, 0x01, 0x04, 0x02}; 
+boolean turn=0;
 //-------
 
 // 讀卡宣告
@@ -90,8 +91,8 @@ void loop()
   {
     while (Serial1.read() >= 0){}
     while (Serial2.read() >= 0){}
-    Serial2.write(rfidCMD,sizeof(rfidCMD));
-    Serial1.flush();
+    /*Serial2.write(rfidCMD,sizeof(rfidCMD));
+    Serial2.flush();*/
   }
   #endif // Manual
   // 手動
@@ -120,7 +121,6 @@ void loop()
     OldLedMode = LedMode;
     previousTime = currentTime;
   }
-  delay(10);
 }
 
 
@@ -146,8 +146,12 @@ void AutoMode(){
             Auto(LineRead()); //巡線
         }else{
             CardReaderTemporaryStorage = CardReader;
+            Auto(LineRead()); //
             Moveleft();
+            turn =0;
             delay(3000);
+            LineData[5] = 0;
+            while (Serial1.read() >= 0){}
         }
 
     }else if (CardReader > mode)
@@ -161,8 +165,12 @@ void AutoMode(){
             Auto(LineRead()); //巡線
         }else{
             CardReaderTemporaryStorage = CardReader;
+            Auto(LineRead()); //
             Moveleft();
+            turn =0;
             delay(3000);
+            LineData[5] = 0;
+            while (Serial1.read() >= 0){}
         }
     }
     
@@ -174,7 +182,7 @@ void LineModeSetup()//Line自手模式上傳設置 因為可能會導致暫存�
   byte l[15];
   Serial1.write(LineAutoSetup, sizeof(LineAutoSetup));
   Serial1.flush();
-  delay(10);
+  delay(5);
 #ifdef DEBUG
   if (Serial1.available() > 0)
   {
@@ -195,7 +203,7 @@ void RFIDModeSetup() //RFID自動模式上傳設置
   byte r[15];
   Serial2.write(rfidSetup, sizeof(rfidSetup));
   Serial2.flush();
-  delay(10);
+  delay(5);
   if (Serial2.available() > 0)
   {
 #ifdef DEBUG
@@ -221,17 +229,16 @@ byte LineRead() //接收循線讀值
   if (Serial1.available() > 0) 
   {
     Serial1.readBytes(LineData, 8);
-    #ifdef DEBUG
     for (byte i = 0; i < sizeof(LineData); i++)
     {
+      #ifdef DEBUG
       Serial.print(LineData[i], HEX);
       Serial.print(",");
+      #endif
     }
     Serial.println();
-    #endif
-    return LineData[5];
   }
-  return 0;
+  return LineData[5];
 }
 
 boolean Line(uint8_t number)
@@ -245,16 +252,11 @@ byte RFIDRead()//接收RFID讀值
   {
     Serial2.readBytes(rfidData, 15);
     #ifdef DEBUG
-    for (byte i = 0; i < sizeof(rfidData); i++)
-    {
-      Serial.print(rfidData[i], HEX);
-      Serial.print(",");
-    }
-    Serial.println();
+    Serial.write(rfidData,sizeof(rfidData));
     #endif
-    return rfidData[9];
+    
   }
-  return 0;
+  return rfidData[9];
 }
 
 void RobotRead(){ // 讀取樹梅派訊息
@@ -375,10 +377,12 @@ void Auto(byte dir)
     Moveforward();
     break;
   case 63: //右邊有路123456號測到
+    turn = 1;
     turnright();
     break;
   case 252: //左邊有路345678號測到
     turnleft();
+    turn = 0;
     break;
   case 192: //左邊87感測到
     Moveforwardl1();
@@ -411,13 +415,26 @@ void Auto(byte dir)
     Moveforwardr3();
     break;
   case 0: //無偵測到
-    Moveleft();
-    if ((dir == 128) || (dir == 192) || (dir == 224))
+    if (turn ==true)
     {
-      Stop();
-      delay(300);
+      Moveright();
+      if ((dir == 128) || (dir == 192) || (dir == 224))
+      {
+        Stop();
+        delay(300);
+      }
+      break;
     }
-    break;
+    else
+    {
+      Moveleft();
+      if ((dir == 128) || (dir == 192) || (dir == 224))
+      {
+        Stop();
+        delay(300);
+      }
+      break;
+    }
   }
 }
 
@@ -505,18 +522,23 @@ void turnright()
   Stop();
   delay(300);
   Moveforward();
-  delay(1000);
-  Moveright();
-  delay(3400);
+  delay(2000);
 }
 void turnleft()
 { //遇到左側有路，左轉動作
   Stop();
   delay(300);
   Moveforward();
-  delay(1000);
-  Moveleft();
-  delay(3400);
+  delay(2000);
+}
+void returnleft()
+{
+  Moveforward();
+  delay(2000);
+  while (!Line(8))
+  {
+    Moveleft();
+  }
 }
 //以上兩個動作是先做暫停，讓車體不要移動，前進1秒，讓旋轉中心到線上(以利轉彎後偵測到磁帶時，車體與磁帶較平行)
 //原地旋轉3.4秒到磁帶上面
