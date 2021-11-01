@@ -39,6 +39,7 @@ byte rfidCMD[8] = {0x01, 0x03, 0x00, 0x06, 0x00, 0x04, 0xA4, 0x08}; //rfidD命�
 // pi 命令
 byte RobotCMD[5] = {0x25, 0x05, 0x00, 0x00, 0xFF};
 String MoveData = ""; // 接收pi訊息
+boolean LinePatrolCycle[3] = {0,0,0};
 byte mode = 0;     // 手自動模式變數
 byte oldmode = 1;  //儲存舊狀態
 // ---
@@ -93,6 +94,7 @@ void loop()
     while (Serial2.read() >= 0){}
     /*Serial2.write(rfidCMD,sizeof(rfidCMD));
     Serial2.flush();*/
+    delay(5);
   }
   #endif // Manual
   // 手動
@@ -129,9 +131,32 @@ void AutoMode(){
     LedMode = 4; //燈號
     byte CardReader = RFIDRead(); // 讀取卡號
     if (CardReader == mode){
-        CardReaderTemporaryStorage = 0;
-        mode = 0;
-        Stop();
+        
+        if (LinePatrolCycle[0]){
+          if(CardReader==1){
+            mode = 4;
+            LinePatrolCycle[1]=1;
+            if (LinePatrolCycle[1] && LinePatrolCycle[2]){
+              returnleft();
+            }
+            
+          }else if (CardReader == 4 )
+          {
+            mode = 1;
+            LinePatrolCycle[2]=1;
+            if (LinePatrolCycle[1] && LinePatrolCycle[2]){
+              returnleft();
+            }
+          }else if(CardReader != 4){
+            mode = 1;
+          }
+        }
+        else
+        {
+          CardReaderTemporaryStorage = 0;
+          mode = 0;
+          Stop();
+        }
     }else if (CardReader == 0)
     {
         Auto(LineRead()); //巡線
@@ -147,11 +172,7 @@ void AutoMode(){
         }else{
             CardReaderTemporaryStorage = CardReader;
             Auto(LineRead()); //
-            Moveleft();
-            turn =0;
-            delay(3000);
-            LineData[5] = 0;
-            while (Serial1.read() >= 0){}
+            returnleft();
         }
 
     }else if (CardReader > mode)
@@ -166,11 +187,7 @@ void AutoMode(){
         }else{
             CardReaderTemporaryStorage = CardReader;
             Auto(LineRead()); //
-            Moveleft();
-            turn =0;
-            delay(3000);
-            LineData[5] = 0;
-            while (Serial1.read() >= 0){}
+            returnleft();
         }
     }
     
@@ -329,23 +346,44 @@ void RobotCommand(String command)
   if (command == "f")
   { // 手動模式
     mode = 0;
+    LinePatrolCycle[0] = 0;
+    LinePatrolCycle[1] = 0;
+    LinePatrolCycle[2] = 0;
   }
   // 自動模式
   if (command == "1")
   {
+    LinePatrolCycle[0] = 0;
+    LinePatrolCycle[1] = 0;
+    LinePatrolCycle[2] = 0;
     mode = 1;
   }
   else if (command == "2")
   {
+    LinePatrolCycle[0] = 0;
+    LinePatrolCycle[1] = 0;
+    LinePatrolCycle[2] = 0;
     mode = 2;
   }
   else if (command == "3")
   {
+    LinePatrolCycle[0] = 0;
+    LinePatrolCycle[1] = 0;
+    LinePatrolCycle[2] = 0;
     mode = 3;
   }
   else if (command == "4")
   {
+    LinePatrolCycle[0] = 0;
+    LinePatrolCycle[1] = 0;
+    LinePatrolCycle[2] = 0;
     mode = 4;
+  }
+  else if (command == "g")
+  {
+    LinePatrolCycle[0] = 1;
+    LinePatrolCycle[1] = 0;
+    LinePatrolCycle[2] = 0;
   }
   //-------------
 }
@@ -520,25 +558,28 @@ void Moveright()
 void turnright()
 { //遇到右側有路，右轉動作
   Stop();
-  delay(300);
+  delay(100);
   Moveforward();
   delay(2000);
+  LineData[5] = 0;
+  while (Serial1.read() >= 0){}
 }
 void turnleft()
 { //遇到左側有路，左轉動作
   Stop();
-  delay(300);
+  delay(100);
   Moveforward();
   delay(2000);
+  LineData[5] = 0;
+  while (Serial1.read() >= 0){}
 }
 void returnleft()
 {
-  Moveforward();
-  delay(2000);
-  while (!Line(8))
-  {
-    Moveleft();
-  }
+  Moveleft();
+  turn =0;
+  delay(3000);
+  LineData[5] = 0;
+  while (Serial1.read() >= 0){}
 }
 //以上兩個動作是先做暫停，讓車體不要移動，前進1秒，讓旋轉中心到線上(以利轉彎後偵測到磁帶時，車體與磁帶較平行)
 //原地旋轉3.4秒到磁帶上面
