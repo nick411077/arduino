@@ -47,6 +47,10 @@ void setup()
         Serial.println("An Error has occurred while mounting SPIFFS");
         return;
     }
+    pinMode(MS1,INPUT);
+    pinMode(MS2,INPUT);
+    pinMode(MS3,INPUT);
+    pinMode(MS4,INPUT);
     Serial.begin(115200); //
     Serial2.begin(115200);
     // Connect to Wi-Fi network with SSID and password
@@ -70,6 +74,7 @@ void setup()
     Serial.println(WiFi.gatewayIP());
     server.addHandler(&events);
     server.begin();
+
     
 }
 
@@ -85,12 +90,12 @@ void loop()
 
 byte MicroSwitchRead()
 {
-    byte DIR = 0;
-    if (digitalRead(MS1) == HIGH){DIR=+1;}
-    if (digitalRead(MS2) == HIGH){DIR=+2;}
-    if (digitalRead(MS3) == HIGH){DIR=+4;}
-    if (digitalRead(MS4) == HIGH){DIR=+8;}
-    return DIR;
+    byte ADIR = 0;
+    if (digitalRead(MS1) == HIGH){ADIR=+1;}
+    if (digitalRead(MS2) == HIGH){ADIR=+2;}
+    if (digitalRead(MS3) == HIGH){ADIR=+4;}
+    if (digitalRead(MS4) == HIGH){ADIR=+8;}
+    return ADIR;
 }
 
 void MegaWrite()
@@ -198,6 +203,6 @@ void Task1code(void *pvParameters) //雙核運行
     for (;;)
     {
         MegaWrite();
-        delay(10);
+        delay(100);
     }
 }

@@ -23,7 +23,7 @@ void loop()
 void ToF()
 {
     Serial2.write(Data,sizeof(Data));
-    delay(20);
+    delay(5);
     ToFValue();
 }
 void ToFValue()
