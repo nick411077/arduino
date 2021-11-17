@@ -14,7 +14,7 @@
 #define PUL 19 //Arduino給驅動器的腳位
 AccelStepper stepper(1, PUL, DIR);
 int MaxSpeed = 2000;    //最高速 空載2000
-int Acceleration = 200; //加速度 空載200
+int Acceleration = 100000; //加速度 空載200
 //int Max = 1300;         //1:80= 16000轉
 
 //Servo設置
@@ -206,7 +206,7 @@ void loop()
   {
     STOP();
   }
-  if (Ultrasound(TRIG1,ECHO1) <= Distance) //超音波小於40公分停止
+  /*if (Ultrasound(TRIG1,ECHO1) <= Distance) //超音波小於40公分停止
   {
     if (counts == counts_run)//達到確認次數及停止
     {
@@ -218,15 +218,15 @@ void loop()
         UCstatus = 0;
       }
     }
-  }
-  else //沒有達到40公分內重新計數
+  }*/
+  /*else //沒有達到40公分內重新計數
   {
     #ifdef DEBUG
     Serial.println("counts restart");
     #endif
     counts = 0;
     UCstatus = 1;
-  }
+  }*/
 }
 
 void moto(int Value, int Power) //直流馬達加速度
@@ -320,7 +320,7 @@ void Step(int Step)
   case 1://左轉
     if (ButtonPressed(SL, 0) == 0 )
     {
-      stepper.setSpeed(200);//設定速度
+      stepper.setSpeed(-Acceleration);//設定速度
       Serial.println("Step1");
     }
     
@@ -332,7 +332,7 @@ void Step(int Step)
   case 3://右轉
     if (ButtonPressed(SR, 1) == 0 )
     {
-      stepper.setSpeed(-200);
+      stepper.setSpeed(Acceleration);
       Serial.println("Step3");
     }
     

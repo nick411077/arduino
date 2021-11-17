@@ -6,7 +6,7 @@
 TaskHandle_t Task1;
 
 //WiFi設置
-const char* ssid     = "Lavender";
+const char* ssid     = "TankWeb";
 const char* password = "12345678";
 
 //WebServer設置
