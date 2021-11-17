@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <Servo.h>
 
-#define DEBUG //除錯測試模式
+//#define DEBUG //除錯測試模式
 //#define Manual //發送返回模式
 
 // 提示燈
@@ -77,7 +77,7 @@ void setup()
   // ---------
 
   // 升降機初始化
-  RC5.attach(10, 1000, 2000);
+  RC5.attach(5, 1000, 2000);
   // -----------
 }
 
@@ -246,14 +246,15 @@ byte LineRead() //接收循線讀值
   if (Serial1.available() > 0) 
   {
     Serial1.readBytes(LineData, 8);
+    #ifdef DEBUG
     for (byte i = 0; i < sizeof(LineData); i++)
     {
-      #ifdef DEBUG
+
       Serial.print(LineData[i], HEX);
       Serial.print(",");
-      #endif
     }
     Serial.println();
+    #endif
   }
   return LineData[5];
 }
@@ -333,15 +334,15 @@ void RobotCommand(String command)
   }
   if (command == "u")
   { // 上升
-    /* code */
+    RC5.write(150);
   }
   if (command == "i")
   { // 停止
-    /* code */
+    RC5.write(90);
   }
   if (command == "o")
   { // 下降
-    /* code */
+    RC5.write(30);
   }
   if (command == "f")
   { // 手動模式
