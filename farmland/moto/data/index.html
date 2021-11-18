@@ -68,7 +68,7 @@
       font-size: 40px;
     }
     .pow{
-      width: 100px;
+      width: 90px;
       height: 34px;
       font-size: 24px;
     }
@@ -81,14 +81,27 @@
       color: white;
     }
     .Space{
-      height: 100px;
+      height: 200px;
       width: 300px;
       margin:auto;
       position: relative;
       display: flex;
       justify-content: space-around;
       align-items: center;
-      align-content: center;
+      align-content: stretch;
+      font-size: 25px;
+    }
+    .num{
+      height: 200px;
+      width: 150px;
+      margin:auto;
+      position: relative;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      align-content: stretch;
+      flex-direction: row;
+      flex-wrap: wrap;
       font-size: 25px;
     }
     .Value{
@@ -114,15 +127,20 @@
     <input type="button" class="direction" value="\" name="9" />
   </div>
   <div class="Space">
-    <input type="number" class="pow" id="powvalue" min="0" max="90" value="45" />
-    <p>Mode: </p>
+    <div class="num">
+    <p>PW</p>
+    <input type="number" class="pow" id="powvalue" min="0" max="100" value="50" />
+    <p>SW</p>
+    <input type="number" class="pow" id="swvalue" min="0" max="100" value="30" />
+  </div>
+    <p>Mode</p>
     <label class="switch">
       <input type="checkbox" id="mode">
       <span class="slider"></span>
     </label>
   </div>
   <div class="Value">
-  <p>Mode: <span id="modePos"></span> Car: <span id="carPos"></span> Power: <span id="powPos"></span></p>
+  <p>Mode: <span id="modePos"></span> DIR: <span id="carPos"></span> PW: <span id="powPos"></span> SW: <span id="swPos"></span></p>
   </div>
   <script src="script.js"></script>
   </body>

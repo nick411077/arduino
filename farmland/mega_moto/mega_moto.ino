@@ -28,12 +28,14 @@ L298NX2 MotorsB(ENL2,INL2A,INL2B,ENR2,INR2A,INR2B);
 byte DIR = 5;
 byte PWM;
 boolean mode;
+byte SW = 30;
 
 byte ADIR = 0;
 //收發ESP32資料
 byte WriteData[8] = {0x50,0x03,0x00,0x00,0x00,0x00,0x00,0x00};
 
 byte ReadData[8];
+byte CheckData[8];
 //ToF
 byte ToFData[7];
 byte Data[8] = {0x50,0x03,0x00,0x34,0x00,0x01,0xC8,0x45};
@@ -51,14 +53,17 @@ void setup()
     Serial2.begin(115200);
 }
 
-void motoAuto(byte dir, byte _PWM)
+void motoAuto(byte dir, byte _PWM,byte SWPWM)
 {
-    byte PW = map(_PWM,0,100,0,250);
-    byte _SWPWM = PW-50;
-    if (PW<=50){_SWPWM=0;}
-    
-    MotorsF.setSpeed(PW);
-    MotorsB.setSpeed(PW);
+    byte _SWPWM1=SWPWM*1;
+    byte _SWPWM2=SWPWM*2;
+    byte _SWPWM3=SWPWM*3;
+    _PWM = map(_PWM,0,100,0,250);
+    if (_PWM<=_SWPWM1){_SWPWM1=0;}
+    if (_PWM<=_SWPWM2){_SWPWM2=0;}
+    if (_PWM<=_SWPWM3){_SWPWM3=0;}
+    MotorsF.setSpeed(_PWM);
+    MotorsB.setSpeed(_PWM);
     switch (dir)
     {
     case 0:
@@ -66,124 +71,124 @@ void motoAuto(byte dir, byte _PWM)
         MotorsB.forward();
         break;
     case 1:
-        MotorsF.setSpeedB(PW-30);
-        MotorsB.setSpeedB(PW-30);
+        MotorsF.setSpeedB(_PWM-_SWPWM1);
+        MotorsB.setSpeedB(_PWM-_SWPWM1);
         MotorsF.forward();
         MotorsB.forward();
         break;
     case 2:
-        MotorsF.setSpeedB(PW-50);
-        MotorsB.setSpeedB(PW-50);
+        MotorsF.setSpeedB(_PWM-_SWPWM2);
+        MotorsB.setSpeedB(_PWM-_SWPWM2);
         MotorsF.forward();
         MotorsB.forward();
         break;
     case 3:
-        MotorsF.setSpeedB(PW-90);
-        MotorsB.setSpeedB(PW-90);
+        MotorsF.setSpeedB(_PWM-_SWPWM3);
+        MotorsB.setSpeedB(_PWM-_SWPWM3);
         MotorsF.forward();
         MotorsB.forward();
         break;
     case 4:
-        MotorsF.setSpeedA(PW-30);
-        MotorsB.setSpeedA(PW-30);
+        MotorsF.setSpeedA(_PWM-_SWPWM1);
+        MotorsB.setSpeedA(_PWM-_SWPWM1);
         MotorsF.forward();
         MotorsB.forward();
         break;
     case 5:
-        MotorsF.setSpeed(PW-50);
-        MotorsB.setSpeed(PW-50);
+        MotorsF.setSpeed(_PWM-_SWPWM2);
+        MotorsB.setSpeed(_PWM-_SWPWM2);
         MotorsF.forward();
         MotorsB.forward();
         break;
     case 6:
-        MotorsF.setSpeed(PW-50);
-        MotorsB.setSpeed(PW-50);
+        MotorsF.setSpeed(_PWM-_SWPWM2);
+        MotorsB.setSpeed(_PWM-_SWPWM2);
         MotorsF.backwardA();
         MotorsB.backwardA();
         MotorsF.forwardB();
         MotorsB.forwardB();
         break;
     case 7:
-        MotorsF.setSpeedA(PW-30);
-        MotorsB.setSpeedA(PW-30);
-        MotorsF.setSpeedB(PW-50);
-        MotorsB.setSpeedB(PW-50);
+        MotorsF.setSpeedA(_PWM-_SWPWM1);
+        MotorsB.setSpeedA(_PWM-_SWPWM1);
+        MotorsF.setSpeedB(_PWM-_SWPWM2);
+        MotorsB.setSpeedB(_PWM-_SWPWM2);
         MotorsF.forward();
         MotorsB.forward();
         break;
     case 8:
-        MotorsF.setSpeedA(PW-50);
-        MotorsB.setSpeedA(PW-50);
+        MotorsF.setSpeedA(_PWM-_SWPWM2);
+        MotorsB.setSpeedA(_PWM-_SWPWM2);
         MotorsF.forward();
         MotorsB.forward();
         break;
     case 9:
-        MotorsF.setSpeed(PW-50);
-        MotorsB.setSpeed(PW-50);
+        MotorsF.setSpeed(_PWM-_SWPWM2);
+        MotorsB.setSpeed(_PWM-_SWPWM2);
         MotorsF.forwardA();
         MotorsB.forwardA();
         MotorsF.backwardB();
         MotorsB.backwardB();
         break;
     case 10:
-        MotorsF.setSpeed(PW-50);
-        MotorsB.setSpeed(PW-50);
+        MotorsF.setSpeed(_PWM-_SWPWM2);
+        MotorsB.setSpeed(_PWM-_SWPWM2);
         MotorsF.forward();
         MotorsB.forward();
         break;
     case 11:
-        MotorsF.setSpeedA(PW-30);
-        MotorsB.setSpeedA(PW-30);
-        MotorsF.setSpeedB(PW-50);
-        MotorsB.setSpeedB(PW-50);
+        MotorsF.setSpeedA(_PWM-_SWPWM1);
+        MotorsB.setSpeedA(_PWM-_SWPWM1);
+        MotorsF.setSpeedB(_PWM-_SWPWM1);
+        MotorsB.setSpeedB(_PWM-_SWPWM1);
         MotorsF.forward();
         MotorsB.forward();
         break;
     case 12:
-        MotorsF.setSpeedA(PW-90);
-        MotorsB.setSpeedA(PW-90);
+        MotorsF.setSpeedA(_PWM-_SWPWM3);
+        MotorsB.setSpeedA(_PWM-_SWPWM3);
         MotorsF.forward();
         MotorsB.forward();
         break;
     case 13:
-        MotorsF.setSpeedA(PW-50);
-        MotorsB.setSpeedA(PW-50);
-        MotorsF.setSpeedB(PW-30);
-        MotorsB.setSpeedB(PW-30);
+        MotorsF.setSpeedA(_PWM-_SWPWM2);
+        MotorsB.setSpeedA(_PWM-_SWPWM2);
+        MotorsF.setSpeedB(_PWM-_SWPWM1);
+        MotorsB.setSpeedB(_PWM-_SWPWM1);
         MotorsF.forward();
         MotorsB.forward();
         break;
     case 14:
-        MotorsF.setSpeedA(PW-50);
-        MotorsB.setSpeedA(PW-50);
-        MotorsF.setSpeedB(PW-30);
-        MotorsB.setSpeedB(PW-30);
+        MotorsF.setSpeedA(_PWM-_SWPWM2);
+        MotorsB.setSpeedA(_PWM-_SWPWM2);
+        MotorsF.setSpeedB(_PWM-_SWPWM1);
+        MotorsB.setSpeedB(_PWM-_SWPWM1);
         MotorsF.forward();
         MotorsB.forward();
         break;
     case 15:
-        MotorsF.setSpeed(PW-50);
-        MotorsB.setSpeed(PW-50);
+        MotorsF.setSpeed(_PWM-_SWPWM2);
+        MotorsB.setSpeed(_PWM-_SWPWM2);
         MotorsF.forward();
         MotorsB.forward();
         break;
     case 16:
-        MotorsF.setSpeed(PW-50);
-        MotorsB.setSpeed(PW-50);
+        MotorsF.setSpeed(_PWM-_SWPWM2);
+        MotorsB.setSpeed(_PWM-_SWPWM2);
         MotorsF.backward();
         MotorsB.backward();
         break;
     }
 }
 
-void motoManual(byte dir, int _PWM = 45)
+void motoManual(byte dir, int _PWM = 45,byte SWPWM)
 {
-    byte PW = map(_PWM,0,100,0,250);
-    byte _SWPWM = PW-50;
-    if (PW<=50){_SWPWM=0;}
+    byte _PWM = map(_PWM,0,100,0,250);
+    byte _SWPWM = SWPWM*2;
+    if (_PWM<=_SWPWM){_SWPWM=0;}
   
-    MotorsF.setSpeed(PW);
-    MotorsB.setSpeed(PW);
+    MotorsF.setSpeed(_PWM);
+    MotorsB.setSpeed(_PWM);
     switch (dir)
     {       //控制
     case 1: // 左前
@@ -246,6 +251,10 @@ void ESP32Read()
 {
     if (Serial1.available())
     {
+        for (byte z = 0; z < sizeof(ReadData); z++)
+        {
+            CheckData[z]=ReadData[z];
+        }
         Serial1.readBytes(ReadData,8);
         int Check = ReadData[0] + ReadData[1];
         if (Check == 67)
@@ -260,7 +269,11 @@ void ESP32Read()
         else
         {
             Serial.println("BUG");
-            while (Serial1.read() >= 0){}
+            for (byte z = 0; z < sizeof(CheckData); z++)
+            {
+                ReadData[z]=CheckData[z];
+            }
+            while (Serial1.read() > 0){}
         }
         
     }
@@ -268,6 +281,7 @@ void ESP32Read()
     DIR = ReadData[3];
     PWM = ReadData[4];
     mode = ReadData[5];
+    SW = ReadData[6];
 }
 void ToF()
 {
@@ -306,15 +320,14 @@ void ToFValue()
 void loop()
 {
     //currentTime = millis(); // 獲取時間用與判斷是否更新
+    ESP32Read();
     if (mode==0)
     {
-        ESP32Read();
-        motoManual(DIR,PWM);
+        motoManual(DIR,PWM,SW);
     }
     else
     {
-        ESP32Read();
-        motoAuto(ADIR,PWM);
+        motoAuto(ADIR,PWM,SW);
     }
     /*if (currentTime - previousTime > interval)
     {

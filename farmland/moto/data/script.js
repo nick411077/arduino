@@ -40,6 +40,7 @@ if (!!window.EventSource) {
         carP.innerHTML = direction[obj.dir - 1].value;
         powP.innerHTML = obj.pwm;
         mode.checked = obj.mode;
+        swP.innerHTML = obj.sw;
         if (obj.mode == 1) {
             modeP.innerHTML = "Auto";
             mode.checked = true
@@ -90,6 +91,14 @@ var direction = document.getElementsByClassName("direction");
       Value.value = this.value;
       powP.innerHTML = this.value;
       delayShowData("pwm",Value.value);
+    }
+    var SwValue = document.getElementById("swvalue");
+    var swP = document.getElementById("swPos");
+    swP.innerHTML = Value.value; //顯示預設的值 會顯示中間值
+    SwValue.oninput = function () {
+      SwValue.value = this.value;
+      swP.innerHTML = this.value;
+      delayShowData("sw",SwValue.value);
     }
     var timers = {};
       function delayShowData(type, values) {

@@ -6,24 +6,35 @@ byte x[7];
 byte Data[8] = {0x50,0x03,0x00,0x34,0x00,0x01,0xC8,0x45};
 unsigned int Long;
 
+// 燈號狀態更新
+long previousTime = 0;  // 用來保存前一次狀態的時間
+long interval = 500;   // 讀取間隔時間，單位為毫秒(miliseconds)
+unsigned long currentTime;
+
 void setup()
 {
+    
     Serial.begin(115200); //
     Serial2.begin(115200);
-    Serial3.begin(115200);
+    //Serial3.begin(115200);
 }
 
 void loop()
 {
-    ToF();
-    delay(100);
+    currentTime = millis(); // 獲取時間用與判斷是否更新
+    if (currentTime - previousTime > interval)
+    {
+        ToF();
+        previousTime = currentTime;
+    }
+    while (Serial2.read() > 0){}
 }
 
 
 void ToF()
 {
     Serial2.write(Data,sizeof(Data));
-    delay(5);
+    delay(20);
     ToFValue();
 }
 void ToFValue()
@@ -39,6 +50,7 @@ void ToFValue()
                 Serial.print(x[i], HEX);
                 Serial.print(",");
             }
+            while (Serial2.read() > 0){}
             Long =  (uint16_t)(x[3] << 8) + x[4];
             Serial.println();
             Serial.print("distance:");
@@ -47,7 +59,7 @@ void ToFValue()
         }
         else
         {
-            while (Serial2.read() >= 0)
+            while (Serial2.read() > 0)
             {
             }
         }

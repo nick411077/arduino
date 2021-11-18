@@ -27,10 +27,12 @@ AsyncEventSource events("/events");
 String DirValue = String(5);
 String PwmValue = String(45);
 String ModeValue = String(0);
+String SwValue = String(30);
 //將 String轉換成int 
 byte DIR = DirValue.toInt();
 byte PWM = PwmValue.toInt();
 boolean mode = ModeValue.toInt();
+byte SW = SwValue.toInt();
 
 unsigned long lastTime = 0;
 unsigned long DataDelay = 1000;
@@ -104,6 +106,7 @@ void MegaWrite()
     WriteData[3] = DIR;
     WriteData[4] = PWM;
     WriteData[5] = mode;
+    WriteData[6] = SW;
     if (Serial2.availableForWrite() > sizeof(WriteData))
     {
         Serial2.write(WriteData,sizeof(WriteData));
@@ -149,6 +152,11 @@ void WebServer()
                 ModeValue = request->arg(i);
                 mode = ModeValue.toInt();//將 String轉換成int  
             }
+            else if (request->argName(i) == "sw") //GET網站方向狀態
+            {
+                SwValue = request->arg(i);
+                SW = SwValue.toInt();//將 String轉換成int  
+            }
         }
         request->send(SPIFFS, "/index.html", "text/html");
     });
@@ -179,6 +187,7 @@ String getValue()
   root["dir"] = (String)DirValue;
   root["pwm"] = (String)PwmValue;
   root["mode"] = (String)ModeValue;
+  root["sw"] = (String)SwValue;
   serializeJsonPretty(root, Serial);
   Serial.println("");
   /*
