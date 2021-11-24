@@ -140,12 +140,12 @@ mqtt:
 sensor:
   - platform: mqtt
     name: "Temperature"
-    state_topic: "home/sensor1"
+    state_topic: "office/dht11"
     unit_of_measurement: "°C"
     value_template: "{{ value_json.temperature }}"
   - platform: mqtt
     name: "Humidity"
-    state_topic: "home/sensor1"
+    state_topic: "office/dht11"
     unit_of_measurement: "%"
     value_template: "{{ value_json.humidity }}"
 */
