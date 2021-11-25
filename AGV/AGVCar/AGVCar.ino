@@ -118,7 +118,7 @@ void loop()
   // 更新狀態
   if (currentTime - previousTime > interval)
   {
-    RGYLED(LedMode);
+    Towerled(LedMode);
     RobotWrite();
     OldLedMode = LedMode;
     previousTime = currentTime;
@@ -607,7 +607,7 @@ void DigitalWrite(uint8_t pinNumber, uint8_t status)
 }
 
 // 燈號
-void RGYLED(byte value)
+void Towerled(byte value)
 {
   switch (value)
   {
