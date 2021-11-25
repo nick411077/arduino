@@ -1,7 +1,7 @@
 #include <WiFi.h>
-#include <PubSubClient.h> //
+#include <PubSubClient.h> //https://github.com/knolleary/pubsubclient
 #include "DHT.h" //https://github.com/adafruit/DHT-sensor-library and https://github.com/adafruit/Adafruit_Sensor
-#include <ArduinoJson.h>
+#include <ArduinoJson.h> //https://github.com/bblanchon/ArduinoJson
 
 #define MQTT_VERSION MQTT_VERSION_3_1_1
 
@@ -13,14 +13,14 @@ const char* WIFI_PASSWORD = "nick520301";
 const PROGMEM char* MQTT_CLIENT_ID = "office_dht22";
 const PROGMEM char* MQTT_SERVER_IP = "192.168.1.116";
 const PROGMEM uint16_t MQTT_SERVER_PORT = 1883;
-const PROGMEM char* MQTT_USER = "[Redacted]";
-const PROGMEM char* MQTT_PASSWORD = "[Redacted]";
+const PROGMEM char* MQTT_USER = "mqtt";
+const PROGMEM char* MQTT_PASSWORD = "mqtt";
 
 // MQTT: topic
-const PROGMEM char* MQTT_SENSOR_TOPIC = "home/sensor1";
+const PROGMEM char* MQTT_SENSOR_TOPIC = "office/dht11";
 
 // sleeping time
-const PROGMEM uint16_t SLEEPING_TIME_IN_SECONDS = 60; // 10 minutes x 60 seconds
+const PROGMEM uint16_t SLEEPING_TIME_IN_SECONDS = 10; // 10 minutes x 60 seconds
 
 // DHT - D1/GPIO5
 #define DHTPIN 33
@@ -62,7 +62,7 @@ void reconnect() {
   while (!client.connected()) {
     Serial.println("INFO: Attempting MQTT connection...");
     // Attempt to connect
-    if (client.connect(MQTT_CLIENT_ID)) {
+    if (client.connect(MQTT_CLIENT_ID,MQTT_USER,MQTT_PASSWORD)) {
       Serial.println("INFO: connected");
     } else {
       Serial.print("ERROR: failed, rc=");
@@ -140,12 +140,12 @@ mqtt:
 sensor:
   - platform: mqtt
     name: "Temperature"
-    state_topic: "home/sensor1"
+    state_topic: "office/dht11"
     unit_of_measurement: "°C"
     value_template: "{{ value_json.temperature }}"
   - platform: mqtt
     name: "Humidity"
-    state_topic: "home/sensor1"
+    state_topic: "office/dht11"
     unit_of_measurement: "%"
     value_template: "{{ value_json.humidity }}"
 */

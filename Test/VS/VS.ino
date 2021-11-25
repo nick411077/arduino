@@ -4,7 +4,7 @@ float adc_voltage = 0.0;//分壓電壓
 float in_voltage = 0.0;//輸入電壓
  
 // Floats for resistor values in divider (in ohms)
-float R1 = 38000.0;//電阻
+float R1 = 38300.0;//電阻
 float R2 = 6800.0; //電阻
 // Float for Reference Voltage
 float ref_voltage = 5.25; //Arduino 輸入
