@@ -93,10 +93,10 @@ void loop()
 byte MicroSwitchRead()
 {
     byte ADIR = 0;
-    if (digitalRead(MS1) == HIGH){ADIR=+1;}
-    if (digitalRead(MS2) == HIGH){ADIR=+2;}
-    if (digitalRead(MS3) == HIGH){ADIR=+4;}
-    if (digitalRead(MS4) == HIGH){ADIR=+8;}
+    if (digitalRead(MS1) == HIGH){ADIR+=1;}
+    if (digitalRead(MS2) == HIGH){ADIR+=2;}
+    if (digitalRead(MS3) == HIGH){ADIR+=4;}
+    if (digitalRead(MS4) == HIGH){ADIR+=8;}
     return ADIR;
 }
 
