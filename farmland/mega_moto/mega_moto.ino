@@ -181,9 +181,9 @@ void motoAuto(byte dir, byte _PWM,byte SWPWM)
     }
 }
 
-void motoManual(byte dir, int _PWM = 45,byte SWPWM)
+void motoManual(byte dir, byte _PWM = 45,byte SWPWM)
 {
-    byte _PWM = map(_PWM,0,100,0,250);
+    _PWM = map(_PWM,0,100,0,250);
     byte _SWPWM = SWPWM*2;
     if (_PWM<=_SWPWM){_SWPWM=0;}
   
