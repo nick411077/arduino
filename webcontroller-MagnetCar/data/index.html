@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <style>
+    body {
+      text-align: center;
+      font-family: "Trebuchet MS", Arial;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 90px;
+      height: 51px;
+    }
+    
+    .switch input { 
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      -webkit-transition: .4s;
+      transition: .4s;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 39px;
+      width: 39px;
+      left: 6px;
+      bottom: 6px;
+      background-color: white;
+      -webkit-transition: .4s;
+      transition: .4s;
+    }
+    
+    input:checked + .slider {
+      background-color: #2196F3;
+    }
+    
+    input:focus + .slider {
+      box-shadow: 0 0 1px #2196F3;
+    }
+    
+    input:checked + .slider:before {
+      -webkit-transform: translateX(39px);
+      -ms-transform: translateX(39px);
+      transform: translateX(39px);
+    }
+    .direction{
+      width: 100px;
+      height: 100px;
+      font-size: 40px;
+    }
+    .pow{
+      width: 90px;
+      height: 34px;
+      font-size: 24px;
+    }
+    .P{
+      width: 100px;
+      height: 100px;
+      font-size: 40px;
+      border-radius: 100px;
+      background-color: #e03434;
+      color: white;
+    }
+    .Space{
+      height: 100px;
+      width: 300px;
+      margin:auto;
+      position: relative;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      align-content: stretch;
+      font-size: 25px;
+    }
+    .num{
+      height: 100px;
+      width: 150px;
+      margin:auto;
+      position: relative;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      align-content: stretch;
+      flex-direction: row;
+      flex-wrap: wrap;
+      font-size: 25px;
+    }
+    .car{
+      height: 30px;
+      width: 30px;
+      margin:auto;
+      position: relative;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      align-content: flex-end;
+      flex-direction: row;
+      flex-wrap: wrap;
+      font-size: 30px;
+    }
+    .Value{
+      height: 50px;
+      width: 330px;
+      font-size: 25px;
+      margin:auto;
+      position: relative;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      align-content: stretch;
+
+      
+    }
+  </style>
+  <script src="jquery-3.3.1.min.js"></script>
+</head>
+<body>
+  <h1>ESP32 with Car</h1>
+  <div class="carSlider">
+    <input type="button" class="direction" value="↖" name="1" />
+    <input type="button" class="direction" value="↑" name="2" />
+    <input type="button" class="direction" value="↗" name="3" />
+    <br>
+    <input type="button" class="direction" value="←" name="4" />
+    <input type="button" class="direction" value="■" name="5" />
+    <input type="button" class="direction" value="→" name="6" />
+    <br>
+    <input type="button" class="direction" value="↙" name="7" />
+    <input type="button" class="direction" value="↓" name="8" />
+    <input type="button" class="direction" value="↘" name="9" />
+  </div>
+  <div class="Space">
+    <div class="num">
+      <p>PW</p>
+      <input type="number" class="pow" id="powvalue" min="0" max="100" value="50" />
+    </div>
+    <p>Mode</p>
+    <label class="switch">
+      <input type="checkbox" id="mode">
+      <span class="slider"></span>
+    </label>
+  </div>
+  <div class="Value">
+    <p>Mode: </p><p><span id="modePos"></span></p><p> DIR: </p><p><span class="car" id="carPos"></span></p><p> PW: </p><p><span id="powPos"></span></p>
+  </div>
+  <script src="script.js"></script>
+</body>
+
+</html>

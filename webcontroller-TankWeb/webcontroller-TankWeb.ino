@@ -60,9 +60,9 @@ int value;
 
 void check()//進行步進初始位址
 {
-  if (digitalRead(light1) == 0)
+  if (digitalRead(light1) == 0)//如果下面光遮有遮到
   {
-    while (digitalRead(light1) == 0)
+    while (digitalRead(light1) == 0)//就往上慢慢走
     {
       stepper.setSpeed(-2500);
       stepper.runSpeed();
@@ -71,7 +71,7 @@ void check()//進行步進初始位址
   }
   else
   {
-    while (digitalRead(light1) == 1)
+    while (digitalRead(light1) == 1)//沒有的話就往下走初始化
     {
       stepper.setSpeed(10000);
       stepper.runSpeed();
@@ -80,14 +80,14 @@ void check()//進行步進初始位址
   }
 }
 
-void restart()
+void restart()//計算里程
 {
-  if (digitalRead(light1) == 1)
+  if (digitalRead(light1) == 1)//如果確定沒有遮到就計算里程
   {
     Serial.println("2");
     stepper.setCurrentPosition(0);
     stepper.setSpeed(-10000);
-    while (digitalRead(light2) == 1)
+    while (digitalRead(light2) == 1)//碰到上面光遮就跳出迴圈
     {
       stepper.runSpeed();
     }
