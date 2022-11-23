@@ -194,9 +194,6 @@ void Task1code(void *pvParameters) //雙核運行
   for (;;)
   {
     currentTime = millis(); // 獲取時間用與判斷是否更新
-  if (!client.connected()) {
-    reconnect();
-  }
   if (hall_state_changed())
   {
     hall_handle_state_change();
