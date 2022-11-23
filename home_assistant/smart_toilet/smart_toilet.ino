@@ -11,13 +11,13 @@
 #define MQTT_VERSION MQTT_VERSION_3_1_1
 
 // Wifi: SSID and password
-const char* WIFI_SSID = "罐頭new";
-const char* WIFI_PASSWORD = "nick520301";
+const char* WIFI_SSID = "iot517";
+const char* WIFI_PASSWORD = "iot517517";
 
 // MQTT: ID, server IP, port, username and password
 const PROGMEM char* MQTT_CLIENT_ID = "smart_toilet";
-const PROGMEM char* MQTT_SERVER_IP = "192.168.1.116";
-const PROGMEM uint16_t MQTT_SERVER_PORT = 1883;
+const PROGMEM char* MQTT_SERVER_IP = "120.106.21.242";
+const PROGMEM unsigned short MQTT_SERVER_PORT = 1883;
 const PROGMEM char* MQTT_USER = "mqtt";
 const PROGMEM char* MQTT_PASSWORD = "mqtt";
 
@@ -58,6 +58,8 @@ long previousTime = 0;
 long interval = 10000;
 unsigned long currentTime;
 boolean Timeout = false;
+
+int m_cover_state = 0; // light is turned off by default
 
 //雙核運行
 TaskHandle_t Task1;
@@ -275,15 +277,23 @@ void Task1code(void *pvParameters) //雙核運行
   {
     if (currentTime - previousTime > interval)
     {
-    stateChanged(Hall_OPEN);
+    current_state_set(Hall_CLOSED);
     Timeout = false;
     }
   }
-  delay(10);
+  delay(100);
   client.loop();
   }
 }
 
+void current_state_set(int new_state)
+{
+  if (m_cover_state != new_state)
+  {
+    m_cover_state = new_state;
+    stateChanged(m_cover_state);
+  }
+}
 
 void stateChanged(int state)
 {
@@ -311,6 +321,8 @@ boolean hall_state_changed()
 {
   SButtonState = digitalRead(buttonpin);
   SSensorState = digitalRead(sensorpin);
+  Serial.println(SButtonState);
+  Serial.println(SSensorState);
   if (SButtonState != lastButtonState || SSensorState != lastSensorState)
   {
     return true;
@@ -327,22 +339,25 @@ void hall_handle_state_change()
   lastSensorState = SSensorState;
   if (ButtonState != lastButtonState || SensorState != lastSensorState)
   {
-    if (lastButtonState == 0)
+    if (lastButtonState == 1)
     {
-      stateChanged(Hall_OPEN);
+      current_state_set(Hall_OPEN);
       Timeout = false;
+      Serial.println("open");
     }
     else
     {
       if (lastSensorState == 1)
       {
-        stateChanged(Hall_PEOPLE);
+        current_state_set(Hall_PEOPLE);
         Timeout = false;
+        Serial.println("people");
       }
       else
       {
         Timeout = true;
         previousTime = currentTime;
+        Serial.println("time colse");
       }
     }
   }
