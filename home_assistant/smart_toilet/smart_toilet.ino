@@ -1,7 +1,12 @@
 #include <WiFi.h>
 #include <PubSubClient.h> //https://github.com/knolleary/pubsubclient
-#include <SHT1x-ESP.h> //https://github.com/beegee-tokyo/SHT1x-ESP
 #include <ArduinoJson.h> //https://github.com/bblanchon/ArduinoJson
+//#define SHT
+#ifdef SHT
+#include <SHT1x-ESP.h> //https://github.com/beegee-tokyo/SHT1x-ESP
+#else
+#include "DHT.h" //https://github.com/adafruit/DHT-sensor-library and https://github.com/adafruit/Adafruit_Sensor
+#endif
 
 #define MQTT_VERSION MQTT_VERSION_3_1_1
 
@@ -45,10 +50,17 @@ boolean Timeout = false;
 //雙核運行
 TaskHandle_t Task1;
 
+#ifdef
 // Specify data and clock connections and instantiate SHT1x object
 #define dataPin  22
 #define clockPin 21
 SHT1x sht1x(dataPin, clockPin);
+#else
+#define DHTPIN 22
+#define DHTTYPE DHT11
+
+DHT dht(DHTPIN, DHTTYPE);
+#endif
 
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
@@ -160,9 +172,15 @@ void loop() {
   client.loop();
   // Reading temperature or humidity takes about 250 milliseconds!
   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+  #ifdef SHT
   float h = sht1x.readTemperatureF();
   // Read temperature as Celsius (the default)
   float t = sht1x.readTemperatureC();
+  #else
+  float h = dht.readHumidity();
+  // Read temperature as Celsius (the default)
+  float t = dht.readTemperature();
+  #endif
 
   if (isnan(h) || isnan(t)) {
     Serial.println("ERROR: Failed to read from DHT sensor!");
