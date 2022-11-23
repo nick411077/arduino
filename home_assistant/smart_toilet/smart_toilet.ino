@@ -25,18 +25,30 @@ const PROGMEM char* MQTT_PASSWORD = "mqtt";
 const PROGMEM char* MQTT_TH_SENSOR_TOPIC = "toilet/TH";
 const PROGMEM char* MQTT_GAS_SENSOR_TOPIC = "toilet/GAS";
 const PROGMEM char* MQTT_SWITCH_STATUS_TOPIC = "toilet/people";
+const PROGMEM char* MQTT_HAND_SENSOR_TOPIC = "toilet/HAND";
+const PROGMEM char* MQTT_TOILEPAPER_SENSOR_TOPIC = "toilet/TOILEPAPER";
 
+float vcc = 3.3;
+float resolution = 4095;
 
 //TGS2602
-#define airpin 36 
+#define airpin 33 
 
 //pir_butten
-#define buttonpin 10  //buttenPIN
-#define sensorpin 32    //hc-sr505pin
+#define buttonpin 26  //buttenPIN
+#define sensorpin 19    //hc-sr505pin
+
+#define handpin 18
+
+#define toilepaperpin 32
 
 const PROGMEM int Hall_OPEN = 0;
 const PROGMEM int Hall_CLOSED = 1;
 const PROGMEM int Hall_PEOPLE = 2;
+
+const char* HAND_ON = "1";
+const char* HAND_OFF= "0";
+
 
 int lastButtonState = Hall_OPEN;  // 按鈕的前一個狀態
 int lastSensorState = Hall_OPEN;
@@ -109,6 +121,38 @@ void publishGasData(float p_gas) {
   yield();
 }
 
+
+void publishHandData(boolean p_hand) 
+{
+  if (p_hand) {
+    client.publish(MQTT_HAND_SENSOR_TOPIC, HAND_ON, true);
+  } else {
+    client.publish(MQTT_HAND_SENSOR_TOPIC, HAND_OFF, true);
+  }
+}
+
+/*void publishToilepaperData(float p_toilepaper)
+{
+  char charBuf[10];
+  Serial.println(p_toilepaper);
+
+  client.publish(MQTT_TOILEPAPER_SENSOR_TOPIC, charBuf, true);
+}*/
+
+float irSensor(int pin)
+{
+  float ave = 0;
+  float real_distance = 0; 
+  for(int k = 0; k < 100;k ++)
+  {
+    ave += analogRead(pin);
+  }
+  ave  = ave/100;
+  ave = ave * (vcc/ resolution);
+  real_distance = 60.374 * pow(ave , -1.16); 
+  return real_distance;
+}
+
 // function called when a MQTT message arrived
 void callback(char* p_topic, byte* p_payload, unsigned int p_length) {
 }
@@ -133,6 +177,10 @@ void reconnect() {
 void setup() {
   // init the serial
   Serial.begin(115200);
+  pinMode(buttonpin,INPUT_PULLUP);
+  pinMode(sensorpin,INPUT);
+  pinMode(handpin,INPUT);
+  pinMode(35, INPUT);
   xTaskCreatePinnedToCore(//雙核運行參數
              Task1code, /* Task function. */
              "Task1",   /* name of task. */
@@ -197,9 +245,16 @@ void loop() {
   float R0 = 30.0; 
   int sensorValue = analogRead(airpin); 
   sensor_volt = ((float)sensorValue / 4095) * 3.3;
-  RS_gas = (5.0-sensor_volt)/sensor_volt; // Depend on RL on yor module 
+  RS_gas = (3.3-sensor_volt)/sensor_volt; // Depend on RL on yor module 
   ratio = RS_gas / R0; // ratio = RS/R0 
   ppm = -46.7741935483871000000000000* pow(ratio,1) + 38.4193548387097000000000000;
+  publishGasData(ppm);
+
+  publishHandData(digitalRead(handpin));
+
+  //publishToilepaperData(irSensor(toilepaperpin));
+  
+
 
   delay(5000); // wait for deep sleep to happen
 }
