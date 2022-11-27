@@ -28,7 +28,7 @@ const PROGMEM char* MQTT_SWITCH_STATUS_TOPIC = "toilet/people";
 const PROGMEM char* MQTT_HAND_SENSOR_TOPIC = "toilet/HAND";
 const PROGMEM char* MQTT_TOILEPAPER_SENSOR_TOPIC = "toilet/TOILEPAPER";
 
-float vcc = 3.3;
+float vcc = 3.5;
 float resolution = 4095;
 
 //TGS2602
@@ -64,7 +64,7 @@ int m_cover_state = 0; // light is turned off by default
 //雙核運行
 TaskHandle_t Task1;
 
-#ifdef
+#ifdef SHT
 // Specify data and clock connections and instantiate SHT1x object
 #define dataPin  22
 #define clockPin 21
@@ -90,12 +90,6 @@ void publishTHData(float p_temperature, float p_humidity) {
   root["humidity"] = (String)p_humidity;
   serializeJsonPretty(root, Serial);
   Serial.println("");
-  /*
-     {
-        "temperature": "23.20" ,
-        "humidity": "43.70"
-     }
-  */
   char data[200];
   serializeJson(root, data, measureJson(root) + 1);
   client.publish(MQTT_TH_SENSOR_TOPIC, data, true);
@@ -111,13 +105,7 @@ void publishGasData(float p_gas) {
   root["gas"] = (String)p_gas;
   serializeJsonPretty(root, Serial);
   Serial.println("");
-  /*
-     {
-        "temperature": "23.20" ,
-        "humidity": "43.70"
-     }
-  */
-  char data[200];
+  char data[100];
   serializeJson(root, data, measureJson(root) + 1);
   client.publish(MQTT_GAS_SENSOR_TOPIC, data, true);
   yield();
@@ -126,20 +114,28 @@ void publishGasData(float p_gas) {
 
 void publishHandData(boolean p_hand) 
 {
-  if (p_hand) {
+  Serial.println(p_hand);
+  if (!p_hand) {
     client.publish(MQTT_HAND_SENSOR_TOPIC, HAND_ON, true);
   } else {
     client.publish(MQTT_HAND_SENSOR_TOPIC, HAND_OFF, true);
   }
 }
 
-/*void publishToilepaperData(float p_toilepaper)
-{
-  char charBuf[10];
-  Serial.println(p_toilepaper);
-
-  client.publish(MQTT_TOILEPAPER_SENSOR_TOPIC, charBuf, true);
-}*/
+void publishtoilepaperData(float p_paper) {
+  // create a JSON object
+  // doc : https://github.com/bblanchon/ArduinoJson/wiki/API%20Reference
+  StaticJsonDocument<200> jsonBuffer;
+  JsonObject root = jsonBuffer.to<JsonObject>();
+  // INFO: the data must be converted into a string; a problem occurs when using floats...
+  root["paper"] = (String)p_paper;
+  serializeJsonPretty(root, Serial);
+  Serial.println("");
+  char data[100];
+  serializeJson(root, data, measureJson(root) + 1);
+  client.publish(MQTT_TOILEPAPER_SENSOR_TOPIC, data, true);
+  yield();
+}
 
 float irSensor(int pin)
 {
@@ -151,7 +147,7 @@ float irSensor(int pin)
   }
   ave  = ave/100;
   ave = ave * (vcc/ resolution);
-  real_distance = 60.374 * pow(ave , -1.16); 
+  real_distance = 5.2819 * pow(ave , -1.161); 
   return real_distance;
 }
 
@@ -251,10 +247,8 @@ void loop() {
   ratio = RS_gas / R0; // ratio = RS/R0 
   ppm = -46.7741935483871000000000000* pow(ratio,1) + 38.4193548387097000000000000;
   publishGasData(ppm);
-
+  publishtoilepaperData(irSensor(toilepaperpin));
   publishHandData(digitalRead(handpin));
-
-  //publishToilepaperData(irSensor(toilepaperpin));
   
 
 
@@ -321,8 +315,8 @@ boolean hall_state_changed()
 {
   SButtonState = digitalRead(buttonpin);
   SSensorState = digitalRead(sensorpin);
-  Serial.println(SButtonState);
-  Serial.println(SSensorState);
+  //Serial.println(SButtonState);
+  //Serial.println(SSensorState);
   if (SButtonState != lastButtonState || SSensorState != lastSensorState)
   {
     return true;
