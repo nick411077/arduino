@@ -1,9 +1,10 @@
 #include <WiFi.h>
 #include <PubSubClient.h> //https://github.com/knolleary/pubsubclient
 #include <ArduinoJson.h> //https://github.com/bblanchon/ArduinoJson
-//#define SHT
+#define SHT
 #ifdef SHT
-#include <SHT1x-ESP.h> //https://github.com/beegee-tokyo/SHT1x-ESP
+#include <Wire.h>
+#include <Adafruit_SHT31.h>  //https://github.com/adafruit/Adafruit_SHT31 and https://github.com/adafruit/Adafruit_Sensor
 #else
 #include "DHT.h" //https://github.com/adafruit/DHT-sensor-library and https://github.com/adafruit/Adafruit_Sensor
 #endif
@@ -11,12 +12,12 @@
 #define MQTT_VERSION MQTT_VERSION_3_1_1
 
 // Wifi: SSID and password
-const char* WIFI_SSID = "iot517";
-const char* WIFI_PASSWORD = "iot517517";
+const char* WIFI_SSID = "IoT office";
+const char* WIFI_PASSWORD = "Iot5195911";
 
 // MQTT: ID, server IP, port, username and password
 const PROGMEM char* MQTT_CLIENT_ID = "smart_toilet";
-const PROGMEM char* MQTT_SERVER_IP = "120.106.21.242";
+const PROGMEM char* MQTT_SERVER_IP = "192.168.50.91";
 const PROGMEM unsigned short MQTT_SERVER_PORT = 1883;
 const PROGMEM char* MQTT_USER = "mqtt";
 const PROGMEM char* MQTT_PASSWORD = "mqtt";
@@ -28,14 +29,16 @@ const PROGMEM char* MQTT_SWITCH_STATUS_TOPIC = "toilet/people";
 const PROGMEM char* MQTT_HAND_SENSOR_TOPIC = "toilet/HAND";
 const PROGMEM char* MQTT_TOILEPAPER_SENSOR_TOPIC = "toilet/TOILEPAPER";
 
-float vcc = 3.5;
+float vcc = 5;
 float resolution = 4095;
+float R1 = 15000;
+float R2 = 30000;
 
 //TGS2602
 #define airpin 33 
 
 //pir_butten
-#define buttonpin 26  //buttenPIN
+#define buttonpin 34  //buttenPIN
 #define sensorpin 19    //hc-sr505pin
 
 #define handpin 18
@@ -68,7 +71,8 @@ TaskHandle_t Task1;
 // Specify data and clock connections and instantiate SHT1x object
 #define dataPin  22
 #define clockPin 21
-SHT1x sht1x(dataPin, clockPin);
+TwoWire I2CSHT = TwoWire(0);
+Adafruit_SHT31 sht31 = Adafruit_SHT31(&I2CSHT);
 #else
 #define DHTPIN 22
 #define DHTTYPE DHT11
@@ -146,7 +150,8 @@ float irSensor(int pin)
     ave += analogRead(pin);
   }
   ave  = ave/100;
-  ave = ave * (vcc/ resolution);
+  ave = (ave * vcc) / resolution;
+  ave = ave / (R2/(R1+R2));
   real_distance = 5.2819 * pow(ave , -1.161); 
   return real_distance;
 }
@@ -179,6 +184,24 @@ void setup() {
   pinMode(sensorpin,INPUT);
   pinMode(handpin,INPUT);
   pinMode(35, INPUT);
+#ifdef SHT
+  I2CSHT.begin(dataPin,clockPin);
+  while (!Serial)
+    delay(10);     // will pause Zero, Leonardo, etc until serial console opens
+
+  Serial.println("SHT31 test");
+  if (! sht31.begin(0x44)) {   // Set to 0x45 for alternate i2c addr
+    Serial.println("Couldn't find SHT31");
+    while (1) delay(1);
+  }
+
+  Serial.print("Heater Enabled State: ");
+  if (sht31.isHeaterEnabled())
+    Serial.println("ENABLED");
+  else
+    Serial.println("DISABLED");
+
+#endif
   xTaskCreatePinnedToCore(//雙核運行參數
              Task1code, /* Task function. */
              "Task1",   /* name of task. */
@@ -219,9 +242,9 @@ void loop() {
   // Reading temperature or humidity takes about 250 milliseconds!
   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
   #ifdef SHT
-  float h = sht1x.readTemperatureF();
+  float h = sht31.readHumidity();
   // Read temperature as Celsius (the default)
-  float t = sht1x.readTemperatureC();
+  float t = sht31.readTemperature();
   #else
   float h = dht.readHumidity();
   // Read temperature as Celsius (the default)
@@ -242,8 +265,8 @@ void loop() {
   float ppm;
   float R0 = 30.0; 
   int sensorValue = analogRead(airpin); 
-  sensor_volt = ((float)sensorValue / 4095) * 3.3;
-  RS_gas = (3.3-sensor_volt)/sensor_volt; // Depend on RL on yor module 
+  sensor_volt = ((float)sensorValue / resolution) * vcc;
+  RS_gas = (vcc-sensor_volt)/sensor_volt; // Depend on RL on yor module 
   ratio = RS_gas / R0; // ratio = RS/R0 
   ppm = -46.7741935483871000000000000* pow(ratio,1) + 38.4193548387097000000000000;
   publishGasData(ppm);
